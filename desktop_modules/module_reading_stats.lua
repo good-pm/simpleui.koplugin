@@ -79,6 +79,55 @@ end
 table.sort(_sorted_pool, function(a, b) return a.label:lower() < b.label:lower() end)
 
 -- ---------------------------------------------------------------------------
+-- Sidecar status helpers
+-- ---------------------------------------------------------------------------
+
+-- Counts all books the user explicitly marked as read ("complete") by iterating
+-- ReadHistory and reading only the ["summary"] block of each sidecar.
+-- Skips annotations/highlights that appear before summary alphabetically.
+local function _countAllMarkedRead()
+    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+    if not ok_lfs then return 0 end
+    local ok_DS, DocSettings = pcall(require, "docsettings")
+    if not ok_DS then return 0 end
+
+    local ReadHistory = package.loaded["readhistory"]
+    if not ReadHistory or not ReadHistory.hist then return 0 end
+
+    local count = 0
+    for _, entry in ipairs(ReadHistory.hist) do
+        local fp = entry.file
+        if fp and lfs.attributes(fp, "mode") == "file" then
+            local sidecar = DocSettings:findSidecarFile(fp)
+            if sidecar then
+                local f = io.open(sidecar, "r")
+                if f then
+                    local in_summary = false
+                    local found = false
+                    for line in f:lines() do
+                        if not in_summary then
+                            if line:find('["summary"]', 1, true) then
+                                in_summary = true
+                            end
+                        else
+                            if line:find('"complete"', 1, true)
+                               and line:find('"status"', 1, true) then
+                                found = true
+                                break
+                            end
+                            if line:find("^%s*},?%s*$") then break end
+                        end
+                    end
+                    f:close()
+                    if found then count = count + 1 end
+                end
+            end
+        end
+    end
+    return count
+end
+
+-- ---------------------------------------------------------------------------
 -- DB fetch
 -- ---------------------------------------------------------------------------
 local _stats_cache     = nil
@@ -128,20 +177,6 @@ local function fetchAllStats(shared_conn)
         end
 
         r.total_secs  = tonumber(conn:rowexec("SELECT sum(duration) FROM page_stat;")) or 0
-        -- Compute finished-book ratio live from page_stat.
-        -- A book counts as finished (all-time) if ≥90% of its pages were read
-        -- (distinct pages visited) OR the highest page reached is ≥90% of the
-        -- total — mirrors the reading_goals criterion so both modules agree.
-        r.total_books = tonumber(conn:rowexec([[
-            SELECT count(*) FROM (
-                SELECT b.id
-                FROM book b
-                JOIN page_stat ps ON ps.id_book = b.id
-                WHERE b.pages > 0
-                GROUP BY b.id
-                HAVING count(DISTINCT ps.page) * 1.0 / b.pages >= 0.90
-                    OR MAX(CAST(ps.page AS INTEGER)) * 1.0 / b.pages >= 0.90
-            )]])) or 0
 
         -- Streak query rewritten to avoid LIMIT inside a CTE — not supported by
         -- the SQLite version bundled in older KOReader builds.
@@ -170,6 +205,11 @@ local function fetchAllStats(shared_conn)
     end)
     if not ok then logger.warn("simpleui: reading_stats: fetchAllStats failed: " .. tostring(err)) end
     if own_conn then pcall(function() conn:close() end) end
+
+    -- Count finished books via sidecar status — respects the user's explicit
+    -- "Mark as read" rather than guessing from page coverage in the stats DB.
+    r.total_books = _countAllMarkedRead()
+
     return r
 end
 

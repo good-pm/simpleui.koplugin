@@ -113,10 +113,19 @@ function SimpleUIPlugin:onResume()
     local reader_active = RUI and RUI.instance
     -- Outside the reader: invalidate stat caches and restore the Homescreen.
     if not reader_active then
-        local ok_rg, RG = pcall(require, "readinggoals")
-        if ok_rg and RG and RG.Stats then RG.Stats.invalidateCache() end
+        local ok_rg, RG = pcall(require, "desktop_modules/module_reading_goals")
+        if ok_rg and RG and RG.invalidateCache then RG.invalidateCache() end
         local ok_rs, RS = pcall(require, "desktop_modules/module_reading_stats")
         if ok_rs and RS and RS.invalidateCache then RS.invalidateCache() end
+        -- If the Homescreen is already visible, force a rebuild so the freshly
+        -- invalidated stats are reflected immediately (e.g. after marking a book
+        -- as read inside the reader and returning here).
+        -- If it's not visible, showHSAfterResume will open it and onShow will
+        -- run _buildContent from scratch anyway.
+        local HS = package.loaded["homescreen"]
+        if HS and HS._instance then
+            HS.refresh(false)
+        end
         -- Re-open the Homescreen on wakeup when "Start with Homescreen" is set.
         if G_reader_settings:nilOrTrue("simpleui_enabled") then
             Patches.showHSAfterResume(self)

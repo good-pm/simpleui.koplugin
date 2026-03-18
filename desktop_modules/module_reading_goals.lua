@@ -79,7 +79,16 @@ local function formatDuration(secs)
     else                     return string.format("%dm", m) end
 end
 
--- Stats cache — keyed by calendar date.
+-- ---------------------------------------------------------------------------
+-- Count books the user explicitly marked as read (summary.status == "complete")
+-- by scanning the KOReader history sidecar directory.
+--
+-- Strategy: read each sidecar as raw text and pattern-match the two keys we
+-- need. This is much cheaper than dofile() on every sidecar (no Lua parse,
+-- no table allocation per file). Sidecar files are small (~2–5 KB) and the
+-- LuaSettings serialiser writes keys as `key = "value"`, so the patterns are
+-- stable across KOReader versions.
+-- ---------------------------------------------------------------------------
 local _stats_cache     = nil
 local _stats_cache_day = nil
 
@@ -88,53 +97,97 @@ local function invalidateStatsCache()
     _stats_cache_day = nil
 end
 
+-- Iterates ReadHistory and checks each book's sidecar for status="complete".
+-- year_str: "2026" to restrict to this year, or nil for all-time.
+-- Reads only the ["summary"] block from the sidecar — skips annotations,
+-- highlights and other large data that appears before it alphabetically.
+-- Result is cached per calendar day so this runs at most once per day.
+local function _countMarkedRead(year_str)
+    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
+    if not ok_lfs then return 0 end
+    local ok_DS, DocSettings = pcall(require, "docsettings")
+    if not ok_DS then return 0 end
+
+    local ReadHistory = package.loaded["readhistory"]
+    if not ReadHistory or not ReadHistory.hist then return 0 end
+
+    local year_pfx = year_str and ('["modified"] = "' .. year_str) or nil
+    local count = 0
+
+    for _, entry in ipairs(ReadHistory.hist) do
+        local fp = entry.file
+        if fp and lfs.attributes(fp, "mode") == "file" then
+            local sidecar = DocSettings:findSidecarFile(fp)
+            if sidecar then
+                local f = io.open(sidecar, "r")
+                if f then
+                    -- Extract only the ["summary"] = { ... } block.
+                    -- dump() writes keys in alphabetical order so summary always
+                    -- appears after potentially large keys (annotations, highlight).
+                    -- We find the block start then read lines until the closing '}'.
+                    local in_summary = false
+                    local found_status, found_year = false, not year_pfx
+                    for line in f:lines() do
+                        if not in_summary then
+                            if line:find('["summary"]', 1, true) then
+                                in_summary = true
+                            end
+                        else
+                            if line:find('"complete"', 1, true)
+                               and line:find('"status"', 1, true) then
+                                found_status = true
+                            end
+                            if year_pfx and line:find(year_pfx, 1, true) then
+                                found_year = true
+                            end
+                            -- Summary block ends at the closing brace line
+                            if line:find("^%s*},?%s*$") then break end
+                        end
+                    end
+                    f:close()
+                    if found_status and found_year then count = count + 1 end
+                end
+            end
+        end
+    end
+    return count
+end
+
 local function getGoalStats(shared_conn)
     local today_key = os.date("%Y-%m-%d")
     if _stats_cache and _stats_cache_day == today_key then
         return _stats_cache[1], _stats_cache[2], _stats_cache[3]
     end
 
-    local books_read, year_secs, today_secs = 0, 0, 0
+    local year_secs, today_secs = 0, 0
     local conn     = shared_conn or Config.openStatsDB()
-    if not conn then return books_read, year_secs, today_secs end
-    local own_conn = not shared_conn
+    if conn then
+        local own_conn = not shared_conn
+        local ok, err = pcall(function()
+            local t           = os.date("*t")
+            local year_start  = os.time{ year = t.year, month = 1, day = 1, hour = 0, min = 0, sec = 0 }
+            local today_start = os.time() - (t.hour * 3600 + t.min * 60 + t.sec)
 
-    local ok, err = pcall(function()
-        local t           = os.date("*t")
-        local year_start  = os.time{ year = t.year, month = 1, day = 1, hour = 0, min = 0, sec = 0 }
-        local today_start = os.time() - (t.hour * 3600 + t.min * 60 + t.sec)
+            local ry = conn:rowexec(string.format([[
+                SELECT sum(s) FROM (
+                    SELECT sum(duration) AS s FROM page_stat
+                    WHERE start_time >= %d GROUP BY id_book, page);]], year_start))
+            year_secs = tonumber(ry) or 0
 
-        local ry = conn:rowexec(string.format([[
-            SELECT sum(s) FROM (
-                SELECT sum(duration) AS s FROM page_stat
-                WHERE start_time >= %d GROUP BY id_book, page);]], year_start))
-        year_secs = tonumber(ry) or 0
+            local rt = conn:rowexec(string.format([[
+                SELECT sum(s) FROM (
+                    SELECT sum(duration) AS s FROM page_stat
+                    WHERE start_time >= %d GROUP BY id_book, page);]], today_start))
+            today_secs = tonumber(rt) or 0
+        end)
+        if not ok then logger.warn("simpleui: reading_goals: getGoalStats failed: " .. tostring(err)) end
+        if own_conn then pcall(function() conn:close() end) end
+    end
 
-        local rt = conn:rowexec(string.format([[
-            SELECT sum(s) FROM (
-                SELECT sum(duration) AS s FROM page_stat
-                WHERE start_time >= %d GROUP BY id_book, page);]], today_start))
-        today_secs = tonumber(rt) or 0
-
-        -- Count books finished this year only: filter page_stat to year_start
-        -- so only reading sessions from 1 Jan onwards are considered.
-        -- A book counts if ≥90% of its pages were read (distinct pages counted,
-        -- or max page reached) within those sessions — matches the annual goal.
-        local tb = conn:rowexec(string.format([[
-            SELECT count(*) FROM (
-                SELECT b.id FROM book b
-                JOIN page_stat ps ON ps.id_book = b.id
-                WHERE b.pages > 0
-                  AND ps.start_time >= %d
-                GROUP BY b.id
-                HAVING count(DISTINCT ps.page) * 1.0 / b.pages >= 0.90
-                    OR MAX(CAST(ps.page AS INTEGER)) * 1.0 / b.pages >= 0.90
-            )]], year_start))
-        books_read = tonumber(tb) or 0
-    end)
-    if not ok then logger.warn("simpleui: reading_goals: getGoalStats failed: " .. tostring(err)) end
-
-    if own_conn then pcall(function() conn:close() end) end
+    -- Count books the user explicitly marked as read this year via the sidecar
+    -- status field ("complete"). This respects the user's intent instead of
+    -- guessing from page coverage in the stats DB.
+    local books_read = _countMarkedRead(os.date("%Y"))
 
     _stats_cache     = { books_read, year_secs, today_secs }
     _stats_cache_day = today_key
