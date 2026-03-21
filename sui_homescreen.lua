@@ -608,12 +608,20 @@ function HomescreenWidget:_buildContent()
     self._header_inner_w    = inner_w
     self._header_body_ref   = body
     self._header_is_wrapped = false
+    local _tr = _  -- capture gettext before the loop's _ variable shadows it
+    local first_mod = true
     for _, mod in ipairs(enabled_mods) do
         local ok_w, widget = pcall(mod.build, inner_w, ctx)
         if not ok_w then
             logger.warn("simpleui homescreen: build failed for "
                         .. tostring(mod.id) .. ": " .. tostring(widget))
         elseif widget then
+            if first_mod then
+                first_mod = false
+            else
+                local gap_px = Config.getModuleGapPx(mod.id, PFX, MOD_GAP)
+                body[#body+1] = self:_vspan(gap_px)
+            end
             if mod.label then body[#body+1] = sectionLabel(mod.label, inner_w) end
             -- Wrap modules that have settings in a hold-to-open-settings
             -- InputContainer.  Modules without getMenuItems are added unwrapped.
@@ -653,7 +661,23 @@ function HomescreenWidget:_buildContent()
                                       and Topbar.TOTAL_TOP_H() or 0
                     UI.showSettingsMenu(
                         _mod.name or _mod.id,
-                        function() return _mod.getMenuItems(_getHsCtxMenu(_self)) end,
+                        function()
+                            local ctx_menu = _getHsCtxMenu(_self)
+                            local items    = _mod.getMenuItems(ctx_menu)
+                            local gap_item = Config.makeGapItem({
+                                text_func = function()
+                                    local pct = Config.getModuleGapPct(_mod.id, PFX)
+                                    return string.format(_tr("Gap  (%d%%)"), pct)
+                                end,
+                                title   = _mod.name or _mod.id,
+                                info    = _tr("Vertical space above this module.\n100% is the default spacing."),
+                                get     = function() return Config.getModuleGapPct(_mod.id, PFX) end,
+                                set     = function(v) Config.setModuleGap(v, _mod.id, PFX) end,
+                                refresh = ctx_menu.refresh,
+                            })
+                            table.insert(items, gap_item)
+                            return items
+                        end,
                         topbar_h,
                         Screen:getHeight(),
                         Bottombar.TOTAL_H()
@@ -664,7 +688,6 @@ function HomescreenWidget:_buildContent()
             else
                 body[#body+1] = widget
             end
-            body[#body+1] = self:_vspan(MOD_GAP)
         end
     end
 
