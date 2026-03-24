@@ -86,13 +86,13 @@ M.ICON = {
     custom         = _P .. "custom.svg",
     custom_dir     = _P .. "custom",             -- directory, no trailing slash
     plugin         = _P .. "plugin.svg",
+    home           = _P .. "home.svg",
 
     -- Navpager arrow icons (KOReader built-ins)
     nav_prev       = _KO .. "chevron.left.svg",
     nav_next       = _KO .. "chevron.right.svg",
 
     -- KOReader built-in icons
-    ko_home        = _KO .. "home.svg",
     ko_star        = _KO .. "star.empty.svg",
     ko_wifi_on     = _KO .. "wifi.open.100.svg",
     ko_wifi_off    = _KO .. "wifi.open.0.svg",
@@ -129,7 +129,7 @@ end
 
 M.ALL_ACTIONS = {
     { id = "home",             label = _("Library"),          icon = M.ICON.library     },
-    { id = "homescreen",       label = _("Home"),             icon = M.ICON.ko_home     },
+    { id = "homescreen",       label = _("Home"),             icon = M.ICON.home     },
     { id = "collections",      label = _("Collections"),      icon = M.ICON.collections },
     { id = "history",          label = _("History"),          icon = M.ICON.history     },
     { id = "continue",         label = _("Continue"),         icon = M.ICON.continue_   },
