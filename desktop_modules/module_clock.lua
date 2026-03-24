@@ -139,7 +139,7 @@ local function build(w, pfx, vspan_pool)
         vg[#vg+1] = CenterContainer:new{
             dimen = Geom:new{ w = inner_w, h = date_h },
             TextWidget:new{
-                text    = os.date("%A, %d %B"),
+                text    = os.date("%a, %B %d"),
                 face    = Font:getFace("smallinfofont", date_fs),
                 fgcolor = CLR_TEXT_SUB,
             },
