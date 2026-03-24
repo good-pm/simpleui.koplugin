@@ -42,17 +42,17 @@ local function _localDate()
         return datetime.secondsToDate(now, true)
     end
     local weekdays = {
-        _("Sunday"), _("Monday"), _("Tuesday"), _("Wednesday"),
-        _("Thursday"), _("Friday"), _("Saturday"),
+        _("Sun"), _("Mon"), _("Tue"), _("Wed"),
+        _("Thu"), _("Fri"), _("Sat"),
     }
     local months = {
         _("January"), _("February"), _("March"),     _("April"),
         _("May"),     _("June"),     _("July"),       _("August"),
         _("September"), _("October"), _("November"),  _("December"),
     }
-    local weekday = weekdays[t.wday] or os.date("%A", now)
+    local weekday = weekdays[t.wday] or os.date("%a", now)
     local month   = months[t.month]  or os.date("%B", now)
-    return string.format("%s, %d %s", weekday, t.mday, month)
+    return string.format("%s, %s %d", weekday, month, t.mday)
 end
 
 -- ---------------------------------------------------------------------------
