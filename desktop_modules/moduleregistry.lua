@@ -41,6 +41,7 @@ local MODULES = {
     { require_mod = "desktop_modules/module_quote"         },
     { require_mod = "desktop_modules/module_currently"     },
     { require_mod = "desktop_modules/module_recent"        },
+    { require_mod = "desktop_modules/module_new_books"     },
     { require_mod = "desktop_modules/module_collections"   },
     { require_mod = "desktop_modules/module_reading_goals" },
     { require_mod = "desktop_modules/module_reading_stats" },

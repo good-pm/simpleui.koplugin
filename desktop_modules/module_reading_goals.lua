@@ -1,8 +1,5 @@
--- module_reading_goals.lua — Simple UI
 -- Reading Goals module: annual and daily progress bars with tap-to-set dialogs.
---
--- Compact inline layout (one row per goal):
---   Label  ████████░░░░  XX%  • detail text
+-- Supports two layouts: Default (bar + detail on separate lines) and Compact (single inline row).
 
 local Blitbuffer      = require("ffi/blitbuffer")
 local Device          = require("device")
@@ -10,7 +7,7 @@ local Font            = require("ui/font")
 local FrameContainer  = require("ui/widget/container/framecontainer")
 local Geom            = require("ui/geometry")
 local GestureRange    = require("ui/gesturerange")
-local HorizontalGroup  = require("ui/widget/horizontalgroup")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local InputContainer  = require("ui/widget/container/inputcontainer")
 local LineWidget      = require("ui/widget/linewidget")
@@ -30,12 +27,13 @@ local PAD2         = UI.PAD2
 local LABEL_H      = UI.LABEL_H
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
 
+-- Colours
 local _CLR_BAR_BG   = Blitbuffer.gray(0.15)
 local _CLR_BAR_FG   = Blitbuffer.gray(0.75)
 local _CLR_TEXT_LBL = Blitbuffer.COLOR_BLACK
 local _CLR_TEXT_PCT = Blitbuffer.COLOR_BLACK
 
--- Base pixel constants at 100% scale — multiplied at render time.
+-- Default layout base dimensions (scaled at render time via _scaledDims)
 local _BASE_ROW_FS  = Screen:scaleBySize(11)
 local _BASE_SUB_FS  = Screen:scaleBySize(10)
 local _BASE_ROW_H   = Screen:scaleBySize(16)
@@ -47,21 +45,31 @@ local _BASE_LBL_W   = Screen:scaleBySize(44)
 local _BASE_COL_GAP = Screen:scaleBySize(8)
 local _BASE_BOT_PAD = Screen:scaleBySize(18)
 
--- Year string — refreshed each call so it's always correct even across a year
--- boundary in a long-running session. Cheap: os.date is a single C call.
+-- Compact layout fixed dimensions (not user-scalable)
+local _COMPACT_ROW_FS  = Screen:scaleBySize(11)
+local _COMPACT_SUB_FS  = Screen:scaleBySize(10)
+local _COMPACT_ROW_H   = Screen:scaleBySize(20)
+local _COMPACT_ROW_GAP = Screen:scaleBySize(8)
+local _COMPACT_BAR_H   = Screen:scaleBySize(7)
+local _COMPACT_LBL_W   = Screen:scaleBySize(44)
+local _COMPACT_COL_GAP = Screen:scaleBySize(8)
+
 local function _getYearStr() return os.date("%Y") end
 
--- Settings keys.
+-- Settings keys
 local SHOW_ANNUAL = "navbar_reading_goals_show_annual"
 local SHOW_DAILY  = "navbar_reading_goals_show_daily"
+local LAYOUT_KEY  = "navbar_reading_goals_layout"  -- "default" | "compact"
 
-local function showAnnual() return G_reader_settings:readSetting(SHOW_ANNUAL) ~= false end
-local function showDaily()  return G_reader_settings:readSetting(SHOW_DAILY)  ~= false end
+local function isCompact()    return G_reader_settings:readSetting(LAYOUT_KEY) == "compact" end
+local function showAnnual()   return G_reader_settings:readSetting(SHOW_ANNUAL) ~= false end
+local function showDaily()    return G_reader_settings:readSetting(SHOW_DAILY)  ~= false end
 
 local function getAnnualGoal()     return G_reader_settings:readSetting("navbar_reading_goal") or 0 end
 local function getAnnualPhysical() return G_reader_settings:readSetting("navbar_reading_goal_physical") or 0 end
 local function getDailyGoalSecs()  return G_reader_settings:readSetting("navbar_daily_reading_goal_secs") or 0 end
 
+-- Formats seconds as "Xh Ym" / "Xh" / "Ym"
 local function formatDuration(secs)
     secs = math.floor(secs or 0)
     if secs <= 0 then return "0m" end
@@ -72,16 +80,7 @@ local function formatDuration(secs)
     else                     return string.format("%dm", m) end
 end
 
--- ---------------------------------------------------------------------------
--- Count books the user explicitly marked as read (summary.status == "complete")
--- by scanning the KOReader history sidecar directory.
---
--- Strategy: read each sidecar as raw text and pattern-match the two keys we
--- need. This is much cheaper than dofile() on every sidecar (no Lua parse,
--- no table allocation per file). Sidecar files are small (~2–5 KB) and the
--- LuaSettings serialiser writes keys as `key = "value"`, so the patterns are
--- stable across KOReader versions.
--- ---------------------------------------------------------------------------
+-- Stats cache keyed by calendar date
 local _stats_cache     = nil
 local _stats_cache_day = nil
 
@@ -90,62 +89,12 @@ local function invalidateStatsCache()
     _stats_cache_day = nil
 end
 
--- Iterates ReadHistory and checks each book's sidecar for status="complete".
--- year_str: "2026" to restrict to this year, or nil for all-time.
--- Reads only the ["summary"] block from the sidecar — skips annotations,
--- highlights and other large data that appears before it alphabetically.
--- Result is cached per calendar day so this runs at most once per day.
-local function _countMarkedRead(year_str)
-    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
-    if not ok_lfs then return 0 end
-    local ok_DS, DocSettings = pcall(require, "docsettings")
-    if not ok_DS then return 0 end
+-- countMarkedRead is provided by module_books_shared (shared implementation).
+local _SH = require("desktop_modules/module_books_shared")
+local _countMarkedRead = _SH.countMarkedRead
 
-    local ReadHistory = package.loaded["readhistory"]
-    if not ReadHistory or not ReadHistory.hist then return 0 end
-
-    local year_pfx = year_str and ('["modified"] = "' .. year_str) or nil
-    local count = 0
-
-    for _, entry in ipairs(ReadHistory.hist) do
-        local fp = entry.file
-        if fp and lfs.attributes(fp, "mode") == "file" then
-            local sidecar = DocSettings:findSidecarFile(fp)
-            if sidecar then
-                local f = io.open(sidecar, "r")
-                if f then
-                    -- Extract only the ["summary"] = { ... } block.
-                    -- dump() writes keys in alphabetical order so summary always
-                    -- appears after potentially large keys (annotations, highlight).
-                    -- We find the block start then read lines until the closing '}'.
-                    local in_summary = false
-                    local found_status, found_year = false, not year_pfx
-                    for line in f:lines() do
-                        if not in_summary then
-                            if line:find('["summary"]', 1, true) then
-                                in_summary = true
-                            end
-                        else
-                            if line:find('"complete"', 1, true)
-                               and line:find('"status"', 1, true) then
-                                found_status = true
-                            end
-                            if year_pfx and line:find(year_pfx, 1, true) then
-                                found_year = true
-                            end
-                            -- Summary block ends at the closing brace line
-                            if line:find("^%s*},?%s*$") then break end
-                        end
-                    end
-                    f:close()
-                    if found_status and found_year then count = count + 1 end
-                end
-            end
-        end
-    end
-    return count
-end
-
+-- Returns books_read, year_secs, today_secs. Uses shared DB connection if provided.
+-- Caches results for the current calendar day.
 local function getGoalStats(shared_conn)
     local today_key = os.date("%Y-%m-%d")
     if _stats_cache and _stats_cache_day == today_key then
@@ -153,18 +102,13 @@ local function getGoalStats(shared_conn)
     end
 
     local year_secs, today_secs = 0, 0
-    local conn     = shared_conn or Config.openStatsDB()
+    local conn = shared_conn or Config.openStatsDB()
     if conn then
         local own_conn = not shared_conn
         local ok, err = pcall(function()
             local t           = os.date("*t")
             local year_start  = os.time{ year = t.year, month = 1, day = 1, hour = 0, min = 0, sec = 0 }
             local today_start = os.time() - (t.hour * 3600 + t.min * 60 + t.sec)
-
-            -- Two independent subqueries in a single SELECT — avoids two round-trips
-            -- while keeping start_time accessible inside each WHERE clause.
-            -- The CASE approach failed because start_time is not projected by the
-            -- inner GROUP BY, making it invisible to the outer CASE expression.
             local stmt = conn:prepare([[
                 SELECT
                     (SELECT sum(s) FROM (
@@ -184,22 +128,14 @@ local function getGoalStats(shared_conn)
         if own_conn then pcall(function() conn:close() end) end
     end
 
-    -- Count books the user explicitly marked as read this year via the sidecar
-    -- status field ("complete"). This respects the user's intent instead of
-    -- guessing from page coverage in the stats DB.
     local books_read = _countMarkedRead(os.date("%Y"))
-
     _stats_cache     = { books_read, year_secs, today_secs }
     _stats_cache_day = today_key
     return books_read, year_secs, today_secs
 end
 
--- ---------------------------------------------------------------------------
--- _scaledDims(scale) — all layout metrics for one render pass.
--- Used by both build() and getHeight() so the two never drift apart.
--- Fonts are resolved here once and stored in d.face_row / d.face_sub so
--- buildGoalRow never calls Font:getFace more than once per render.
--- ---------------------------------------------------------------------------
+-- Computes all layout metrics for the default layout at the given scale factor.
+-- Pre-resolves font faces so buildGoalRow doesn't call Font:getFace on every render.
 local function _scaledDims(scale)
     scale = scale or 1.0
     local row_h   = math.max(8,  math.floor(_BASE_ROW_H   * scale))
@@ -226,6 +162,13 @@ local function _scaledDims(scale)
         goal_row_h = row_h + sub_gap + sub_h + bot_pad,
     }
 end
+
+-- Returns total pixel height for n compact rows including inter-row gap
+local function _compactRowsHeight(n)
+    return n * _COMPACT_ROW_H + (n == 2 and _COMPACT_ROW_GAP or 0)
+end
+
+-- Renders a filled/empty progress bar of the given width and percentage
 local function buildProgressBar(w, pct, bar_h)
     local fw = math.max(0, math.floor(w * math.min(pct, 1.0)))
     if fw <= 0 then
@@ -238,70 +181,146 @@ local function buildProgressBar(w, pct, bar_h)
     }
 end
 
--- ---------------------------------------------------------------------------
--- Compact single-line goal row
---
---  ┌──────────────────────────────────────────────────────┐
---  │  Label  [═══════════════════░░░░░]  XX%  detail text │
---  └──────────────────────────────────────────────────────┘
---
---  Columns (all vertically centred to ROW_H):
---    1. Label   — fixed LBL_W, bold, left-aligned
---    2. gap     — COL_GAP
---    3. Bar     — fixed BAR_W (~60% of flex)
---    4. gap     — COL_GAP
---    5. Pct     — fixed PCT_W, left-aligned
---    6. gap     — COL_GAP
---    7. Detail  — fills remaining space, left-aligned
--- ---------------------------------------------------------------------------
-local function buildGoalRow(inner_w, label_str, pct, pct_str, detail_str, on_tap, d)
-    -- d: scaled dims table computed once per M.build() call.
-    -- d.face_row and d.face_sub are pre-resolved by _scaledDims — no Font:getFace here.
-    local PCT_W       = d.pct_w
-    local BAR_PCT_GAP = d.col_gap
-    local bar_w       = math.max(d.min_bar_w,
-                            inner_w - d.lbl_w - d.col_gap - BAR_PCT_GAP - PCT_W)
+-- Measures the rendered width of each active label using the given face and
+-- returns the smallest lbl_w that fits all of them, with a minimum floor.
+-- Called once per M.build so both rows share the same column width.
+local function _measureLblW(labels, face, floor_w)
+    local max_w = 0
+    for _, lbl in ipairs(labels) do
+        local tw = TextWidget:new{ text = lbl, face = face, bold = true }
+        local w  = tw:getSize().w
+        tw:free()
+        if w > max_w then max_w = w end
+    end
+    return math.max(max_w, floor_w)
+end
 
-    local lbl_widget = TextWidget:new{
-        text    = label_str,
-        face    = d.face_row,
-        bold    = true,
-        fgcolor = _CLR_TEXT_LBL,
-        width   = d.lbl_w,
-    }
+-- Builds a single inline row: Label [bar] XX%  detail
+-- Used by the Compact layout. All elements are horizontally laid out and vertically centred.
+-- lbl_w is pre-computed by _measureLblW so both rows share the same column width.
+local function buildCompactGoalRow(inner_w, lbl_w, label_str, pct, pct_str, detail_str, on_tap)
+    local LeftContainer  = require("ui/widget/container/leftcontainer")
+    local RightContainer = require("ui/widget/container/rightcontainer")
 
-    local bar_widget = buildProgressBar(bar_w, pct, d.bar_h)
+    local ROW_H       = _COMPACT_ROW_H
+    local LBL_BAR_GAP = _COMPACT_COL_GAP
+    local right_w        = math.floor(inner_w * 0.28)
+    local BAR_PCT_GAP    = _COMPACT_COL_GAP
+    local available      = inner_w - lbl_w - LBL_BAR_GAP - BAR_PCT_GAP - right_w
+    if available < Screen:scaleBySize(40) then
+        -- lbl_w grew — shrink right_w before the bar goes below minimum
+        available = Screen:scaleBySize(40)
+        right_w = math.max(0, inner_w - lbl_w - LBL_BAR_GAP - BAR_PCT_GAP - available)
+    end
+    local bar_w          = available
+    local PCT_W          = math.floor(right_w * 0.30)
+    local PCT_DETAIL_GAP = math.floor(right_w * 0.15)
+    local DETAIL_W       = right_w - PCT_W - PCT_DETAIL_GAP
 
-    local pct_widget = TextWidget:new{
-        text      = pct_str,
-        face      = d.face_row,
-        bold      = false,
-        fgcolor   = _CLR_TEXT_PCT,
-        width     = PCT_W,
-        alignment = "right",
-    }
+    local function vcenter_left(child, col_w)
+        return LeftContainer:new{ dimen = Geom:new{ w = col_w, h = ROW_H }, child }
+    end
+    local function vcenter_right(child, col_w)
+        return RightContainer:new{ dimen = Geom:new{ w = col_w, h = ROW_H }, child }
+    end
 
-    local top_row = HorizontalGroup:new{
+    local row = HorizontalGroup:new{
         align = "center",
-        lbl_widget,
-        HorizontalSpan:new{ width = d.col_gap },
-        bar_widget,
+        vcenter_left(TextWidget:new{
+            text    = label_str,
+            face    = Font:getFace("smallinfofont", _COMPACT_ROW_FS),
+            bold    = true,
+            fgcolor = _CLR_TEXT_LBL,
+            width   = lbl_w,
+        }, lbl_w),
+        HorizontalSpan:new{ width = LBL_BAR_GAP },
+        vcenter_left(buildProgressBar(bar_w, pct, _COMPACT_BAR_H), bar_w),
         HorizontalSpan:new{ width = BAR_PCT_GAP },
-        pct_widget,
+        vcenter_left(TextWidget:new{
+            text    = pct_str,
+            face    = Font:getFace("smallinfofont", _COMPACT_ROW_FS),
+            bold    = true,
+            fgcolor = _CLR_TEXT_PCT,
+            width   = PCT_W,
+        }, PCT_W),
+        HorizontalSpan:new{ width = PCT_DETAIL_GAP },
+        vcenter_right(TextWidget:new{
+            text      = detail_str,
+            face      = Font:getFace("cfont", _COMPACT_SUB_FS),
+            fgcolor   = CLR_TEXT_SUB,
+            width     = DETAIL_W,
+            alignment = "right",
+        }, DETAIL_W),
     }
 
-    local detail_widget = TextWidget:new{
-        text    = detail_str,
-        face    = d.face_sub,
-        fgcolor = CLR_TEXT_SUB,
-        width   = inner_w,
+    local frame = FrameContainer:new{
+        bordersize = 0, padding = 0,
+        dimen      = Geom:new{ w = inner_w, h = ROW_H },
+        row,
     }
+
+    if not on_tap then return frame end
+
+    local tappable = InputContainer:new{
+        dimen   = Geom:new{ w = inner_w, h = ROW_H },
+        [1]     = frame,
+        _on_tap = on_tap,
+    }
+    tappable.ges_events = {
+        TapGoalC = {
+            GestureRange:new{ ges = "tap", range = function() return tappable.dimen end },
+        },
+    }
+    function tappable:onTapGoalC()
+        if self._on_tap then self._on_tap() end
+        return true
+    end
+    return tappable
+end
+
+-- Builds a two-line goal row: label + bar + pct on the first line, detail text below.
+-- Used by the Default layout. Accepts a pre-computed dims table from _scaledDims.
+local function buildGoalRow(inner_w, label_str, pct, pct_str, detail_str, on_tap, d)
+    local PCT_W       = d.pct_w
+    local LBL_BAR_GAP = d.col_gap
+    local BAR_PCT_GAP = d.col_gap
+    local available   = inner_w - d.lbl_w - LBL_BAR_GAP - BAR_PCT_GAP - PCT_W
+    if available < d.min_bar_w then
+        available = d.min_bar_w
+        PCT_W = math.max(0, inner_w - d.lbl_w - LBL_BAR_GAP - BAR_PCT_GAP - available)
+    end
+    local bar_w = available
 
     local block = VerticalGroup:new{
         align = "left",
-        top_row,
+        HorizontalGroup:new{
+            align = "center",
+            TextWidget:new{
+                text    = label_str,
+                face    = d.face_row,
+                bold    = true,
+                fgcolor = _CLR_TEXT_LBL,
+                width   = d.lbl_w,
+            },
+            HorizontalSpan:new{ width = LBL_BAR_GAP },
+            buildProgressBar(bar_w, pct, d.bar_h),
+            HorizontalSpan:new{ width = BAR_PCT_GAP },
+            TextWidget:new{
+                text      = pct_str,
+                face      = d.face_row,
+                bold      = true,
+                fgcolor   = _CLR_TEXT_PCT,
+                width     = PCT_W,
+                alignment = "right",
+            },
+        },
         VerticalSpan:new{ width = d.sub_gap },
-        detail_widget,
+        TextWidget:new{
+            text    = detail_str,
+            face    = d.face_sub,
+            fgcolor = CLR_TEXT_SUB,
+            width   = inner_w,
+        },
     }
 
     local frame = FrameContainer:new{
@@ -320,10 +339,7 @@ local function buildGoalRow(inner_w, label_str, pct, pct_str, detail_str, on_tap
     }
     tappable.ges_events = {
         TapGoal = {
-            GestureRange:new{
-                ges   = "tap",
-                range = function() return tappable.dimen end,
-            },
+            GestureRange:new{ ges = "tap", range = function() return tappable.dimen end },
         },
     }
     function tappable:onTapGoal()
@@ -333,18 +349,13 @@ local function buildGoalRow(inner_w, label_str, pct, pct_str, detail_str, on_tap
     return tappable
 end
 
-
--- ---------------------------------------------------------------------------
--- Homescreen refresh helper
--- ---------------------------------------------------------------------------
+-- Triggers a homescreen refresh
 local function _refreshHS()
     local HS = package.loaded["sui_homescreen"]
     if HS then HS.refresh(false) end
 end
 
--- ---------------------------------------------------------------------------
--- Goal dialogs (unchanged from original)
--- ---------------------------------------------------------------------------
+-- Dialog: set the annual book goal
 local function showAnnualGoalDialog(on_confirm)
     local SpinWidget = require("ui/widget/spinwidget")
     UIManager:show(SpinWidget:new{
@@ -362,6 +373,7 @@ local function showAnnualGoalDialog(on_confirm)
     })
 end
 
+-- Dialog: set the count of physical books read this year
 local function showAnnualPhysicalDialog(on_confirm)
     local SpinWidget = require("ui/widget/spinwidget")
     UIManager:show(SpinWidget:new{
@@ -378,10 +390,10 @@ local function showAnnualPhysicalDialog(on_confirm)
     })
 end
 
+-- Dialog: set the daily reading goal in minutes
 local function showDailySettingsDialog(on_confirm)
     local SpinWidget  = require("ui/widget/spinwidget")
-    local cur_secs    = getDailyGoalSecs()
-    local cur_minutes = math.floor(cur_secs / 60)
+    local cur_minutes = math.floor(getDailyGoalSecs() / 60)
     UIManager:show(SpinWidget:new{
         title_text  = _("Daily Reading Goal"),
         info_text   = _("Minutes per day:"),
@@ -397,9 +409,45 @@ local function showDailySettingsDialog(on_confirm)
     })
 end
 
--- ---------------------------------------------------------------------------
+-- Returns pct, pct_str, detail for the annual goal row
+local function _annualData(books_read)
+    local goal = getAnnualGoal()
+    local read = books_read + getAnnualPhysical()
+    local pct, pct_str
+    if goal > 0 then
+        pct     = read / goal
+        pct_str = string.format("%d%%", math.floor(pct * 100))
+    else
+        pct     = 1.0
+        pct_str = ""
+    end
+    logger.dbg("simpleui reading_goals: annual bar — goal=", goal,
+        "books_read=", books_read, "physical=", getAnnualPhysical(),
+        "read=", read, "pct=", pct, "pct_str=", pct_str)
+    local detail = (goal > 0)
+        and string.format(_("%d/%d books"), read, goal)
+        or  string.format(_("%d books"), read)
+    return pct, pct_str, detail
+end
+
+-- Returns pct, pct_str, detail for the daily goal row
+local function _dailyData(today_secs)
+    local goal_secs = getDailyGoalSecs()
+    local pct, pct_str
+    if goal_secs > 0 then
+        pct     = today_secs / goal_secs
+        pct_str = string.format("%d%%", math.floor(pct * 100))
+    else
+        pct     = 1.0
+        pct_str = ""
+    end
+    local detail = (goal_secs <= 0)
+        and string.format(_("%s read"), formatDuration(today_secs))
+        or  string.format("%s/%s", formatDuration(today_secs), formatDuration(goal_secs))
+    return pct, pct_str, detail
+end
+
 -- Module API
--- ---------------------------------------------------------------------------
 local M = {}
 
 M.id          = "reading_goals"
@@ -413,74 +461,62 @@ M.showAnnualPhysicalDialog = showAnnualPhysicalDialog
 M.showDailySettingsDialog  = showDailySettingsDialog
 M.invalidateCache          = invalidateStatsCache
 
--- Called by teardown to drop the per-day stats cache so a hot update or
--- a midnight rollover does not carry stale data into the next session.
+-- Clears the stats cache on plugin reset or midnight rollover
 function M.reset() invalidateStatsCache() end
 
+-- Builds the widget. Branches on layout mode: compact (single inline row) or default (two lines).
 function M.build(w, ctx)
     local show_ann = showAnnual()
     local show_day = showDaily()
     if not show_ann and not show_day then return nil end
 
-    local scale   = Config.getModuleScale("reading_goals", ctx.pfx)
-    local d       = _scaledDims(scale)
     local inner_w = w - PAD * 2
     local books_read, year_secs, today_secs = getGoalStats(ctx.db_conn)
-
     local rows = VerticalGroup:new{ align = "left" }
 
-    if show_ann then
-        local goal     = getAnnualGoal()
-        local read     = books_read + getAnnualPhysical()
-        local pct, pct_str
-        if goal > 0 then
-            pct     = read / goal
-            pct_str = string.format("%d%%", math.floor(pct * 100))
-        else
-            -- No annual goal set: full bar for visual weight, count in detail.
-            pct     = 1.0
-            pct_str = ""
+    if isCompact() then
+        local face = Font:getFace("smallinfofont", _COMPACT_ROW_FS)
+        if show_ann then
+            local pct, pct_str, detail = _annualData(books_read)
+            local lbl_w = _measureLblW({ _getYearStr() }, face, _COMPACT_LBL_W)
+            rows[#rows+1] = buildCompactGoalRow(
+                inner_w, lbl_w, _getYearStr(), pct, pct_str, detail,
+                function() showAnnualGoalDialog() end)
         end
-        logger.dbg("simpleui reading_goals: annual bar — goal=", goal,
-            "books_read=", books_read, "physical=", getAnnualPhysical(),
-            "read=", read, "pct=", pct, "pct_str=", pct_str)
-        local detail
-        if goal > 0 then
-            detail = string.format(_("%d/%d books"), read, goal)
-        else
-            detail = string.format(_("%d books"), read)
+        if show_ann and show_day then
+            rows[#rows+1] = VerticalSpan:new{ width = _COMPACT_ROW_GAP }
         end
-        local on_tap = function() showAnnualGoalDialog() end
-        rows[#rows+1] = buildGoalRow(inner_w, _getYearStr(), pct, pct_str, detail, on_tap, d)
-    end
-
-    if show_ann and show_day then
-        rows[#rows+1] = VerticalSpan:new{ width = d.row_gap }
-    end
-
-    if show_day then
-        local goal_secs = getDailyGoalSecs()
-        local pct, pct_str
-        if goal_secs > 0 then
-            -- Normal case: show progress towards the goal.
-            pct     = today_secs / goal_secs
-            pct_str = string.format("%d%%", math.floor(pct * 100))
-        else
-            -- No daily goal set: show a full bar so the row has visual weight,
-            -- and omit the percentage — the detail line carries the real info.
-            pct     = 1.0
-            pct_str = ""
+        if show_day then
+            local pct, pct_str, detail = _dailyData(today_secs)
+            local lbl_w = _measureLblW({ _("Today") }, face, _COMPACT_LBL_W)
+            rows[#rows+1] = buildCompactGoalRow(
+                inner_w, lbl_w, _("Today"), pct, pct_str, detail,
+                function() showDailySettingsDialog() end)
         end
-        local detail
-        if goal_secs <= 0 then
-            detail = string.format(_("%s read"), formatDuration(today_secs))
-        else
-            detail = string.format("%s/%s",
-                formatDuration(today_secs), formatDuration(goal_secs))
+    else
+        local scale = Config.getModuleScale("reading_goals", ctx.pfx)
+        local d     = _scaledDims(scale)
+        if show_ann then
+            local pct, pct_str, detail = _annualData(books_read)
+            local ann_d = {}
+            for k, v in pairs(d) do ann_d[k] = v end
+            ann_d.lbl_w = _measureLblW({ _getYearStr() }, d.face_row, d.lbl_w)
+            rows[#rows+1] = buildGoalRow(
+                inner_w, _getYearStr(), pct, pct_str, detail,
+                function() showAnnualGoalDialog() end, ann_d)
         end
-        -- Closure allocated only when the row is actually shown.
-        local on_tap = function() showDailySettingsDialog() end
-        rows[#rows+1] = buildGoalRow(inner_w, _("Today"), pct, pct_str, detail, on_tap, d)
+        if show_ann and show_day then
+            rows[#rows+1] = VerticalSpan:new{ width = d.row_gap }
+        end
+        if show_day then
+            local pct, pct_str, detail = _dailyData(today_secs)
+            local day_d = {}
+            for k, v in pairs(d) do day_d[k] = v end
+            day_d.lbl_w = _measureLblW({ _("Today") }, d.face_row, d.lbl_w)
+            rows[#rows+1] = buildGoalRow(
+                inner_w, _("Today"), pct, pct_str, detail,
+                function() showDailySettingsDialog() end, day_d)
+        end
     end
 
     return FrameContainer:new{
@@ -490,14 +526,19 @@ function M.build(w, ctx)
     }
 end
 
+-- Returns the pixel height of the module including the section label
 function M.getHeight(_ctx)
     local n = (showAnnual() and 1 or 0) + (showDaily() and 1 or 0)
     if n == 0 then return 0 end
+    local label_h = require("sui_config").getScaledLabelH()
+    if isCompact() then
+        return label_h + _compactRowsHeight(n)
+    end
     local d = _scaledDims(Config.getModuleScale("reading_goals", _ctx and _ctx.pfx))
-    return require("sui_config").getScaledLabelH() + n * d.goal_row_h + (n == 2 and d.row_gap or 0)
+    return label_h + n * d.goal_row_h + (n == 2 and d.row_gap or 0)
 end
 
-
+-- Builds the scale menu item for the settings menu
 local function _makeScaleItem(ctx_menu)
     local pfx = ctx_menu.pfx
     local _lc = ctx_menu._
@@ -511,12 +552,35 @@ local function _makeScaleItem(ctx_menu)
         refresh      = ctx_menu.refresh,
     })
 end
+
+-- Returns the settings menu items for this module
 function M.getMenuItems(ctx_menu)
     local refresh = ctx_menu.refresh
     local _lc     = ctx_menu._
     local scale_item = _makeScaleItem(ctx_menu)
     scale_item.separator = true
     return {
+        { text = _lc("Type"),
+          sub_item_table = {
+              { text         = _lc("Default"),
+                radio        = true,
+                checked_func = function() return not isCompact() end,
+                keep_menu_open = true,
+                callback = function()
+                    G_reader_settings:saveSetting(LAYOUT_KEY, "default")
+                    refresh()
+                end },
+              { text         = _lc("Compact"),
+                radio        = true,
+                checked_func = function() return isCompact() end,
+                keep_menu_open = true,
+                callback = function()
+                    G_reader_settings:saveSetting(LAYOUT_KEY, "compact")
+                    refresh()
+                end },
+          },
+          separator = true,
+        },
         scale_item,
         { text         = _lc("Annual Goal"),
           checked_func = function() return showAnnual() end,

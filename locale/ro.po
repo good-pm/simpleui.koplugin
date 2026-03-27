@@ -1,0 +1,1069 @@
+# Simple UI — KOReader Plugin
+# Copyright (C) 2024 Simple UI Contributors
+# This file is distributed under the same license as the Simple UI package.
+# yokyroll <>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: simpleui\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-16 21:54+0000\n"
+"PO-Revision-Date: 2026-03-25 19:36+0200\n"
+"Last-Translator: yokyroll <>\n"
+"Language-Team: Romanian\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 50.0\n"
+
+msgid "  Physical Books  (%d in %s)"
+msgstr "  Cărți fizice  (%d în %s)"
+
+msgid "  Set Goal  (%d books in %s)"
+msgstr "  Setează un obiectiv  (%d cărți în %s)"
+
+msgid "  Set Goal  (%d min/day)"
+msgstr "  Setează un obiectiv  (%d min/zi)"
+
+msgid "  Set Goal  (%s)"
+msgstr "  Setează un obiectiv  (%s)"
+
+msgid "  Set Goal  (disabled)"
+msgstr "  Setează un obiectiv  (dezactivat)"
+
+msgid "%d books"
+msgstr "%d cărți"
+
+msgid "%d%% Read"
+msgstr "%d%% citit"
+
+msgid "%d/%d books"
+msgstr "%d/%d cărți"
+
+msgid "%s TO GO"
+msgstr "%s DE PARCURS"
+
+msgid "%s read"
+msgstr "%s citite"
+
+msgid "Add at least 2 actions to arrange."
+msgstr "Adaugă cel puțin 2 acțiuni pentru a le putea aranja."
+
+msgid "Add at least 2 stats to arrange."
+msgstr "Adaugă cel puțin 2 statistici pentru a le putea aranja."
+
+msgid "All time — Books"
+msgstr "Din toate timpurile — Cărți"
+
+msgid "All time — Time"
+msgstr "Din toate timpurile — Timp"
+
+msgid "Annual Goal"
+msgstr "Obiectiv anual"
+
+msgid "Annual Reading Goal"
+msgstr "Obiectiv anual de citit"
+
+msgid "Arrange"
+msgstr "Aranjează"
+
+msgid "Arrange %s"
+msgstr "Aranjează %s"
+
+msgid "Arrange Collections"
+msgstr "Aranjează colecții"
+
+msgid "Arrange Items"
+msgstr "Aranjează articole"
+
+msgid "Arrange Modules"
+msgstr "Aranjează module"
+
+msgid "Arrange Reading Stats"
+msgstr "Aranjează statistici de citit"
+
+msgid "Arrange tabs"
+msgstr "Aranjează file"
+
+msgid "Auto (first book)"
+msgstr "Auto (prima carte)"
+
+msgid "Battery"
+msgstr "Baterie"
+
+msgid "Book Info"
+msgstr "Informații carte"
+
+msgid "Books to read in %s:"
+msgstr "Cărți de citit în %s:"
+
+msgid "Bottom Bar"
+msgstr "Bara de jos"
+
+msgid ""
+"Bottom Bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Bara de jos va fi %s după repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid "Brightness"
+msgstr "Luminozitate"
+
+msgid "Cancel"
+msgstr "Anulare"
+
+msgid "Clock"
+msgstr "Ceas"
+
+msgid "Collection"
+msgstr "Colecție"
+
+msgid "Collection is empty."
+msgstr "Colecția este goală."
+
+msgid "Collection not available: %s"
+msgstr "Colecția nu este disponibilă: %s"
+
+msgid "Collections"
+msgstr "Colecții"
+
+msgid "Collections not available."
+msgstr "Colecțiile nu sunt disponibile."
+
+msgid "Compact"
+msgstr "Compact"
+
+msgid "Continue"
+msgstr "Continuă"
+
+msgid "Create Quick Action"
+msgstr "Crează o acțiune rapidă"
+
+msgid "Currently Reading"
+msgstr "În progres"
+
+msgid "Custom"
+msgstr "Personalizat"
+
+msgid "Custom Text"
+msgstr "Text personalizat"
+
+msgid "Daily Goal"
+msgstr "Obiectiv zilnic"
+
+msgid "Daily Reading Goal"
+msgstr "Obiectiv zilnic de citit"
+
+msgid "Daily avg — Pages"
+msgstr "Media zilnică — Pagini"
+
+msgid "Daily avg — Time"
+msgstr "Media zilnică — Timp"
+
+msgid "Date"
+msgstr "Dată"
+
+msgid "Default"
+msgstr "Implicit"
+
+msgid "Default (Folder)"
+msgstr "Implicit (Dosar)"
+
+msgid "Default (Plugin)"
+msgstr "Implicit (Plugin)"
+
+msgid "Default (System)"
+msgstr "Implicit (Sistem)"
+
+msgid "Delete"
+msgstr "Șterge"
+
+msgid "Dictionary Lookup"
+msgstr "Căutare în dicționar"
+
+msgid "Digital Goal  (%s)"
+msgstr "Obiectiv digital  (%s)"
+
+msgid "Digital: %d books in %s"
+msgstr "Digital: %d cărți în %s"
+
+msgid "Disk Usage"
+msgstr "Utilizarea spațiului pe disc"
+
+msgid "Dispatcher not available."
+msgstr "Dispecerul nu este disponibil"
+
+msgid "Edit"
+msgstr "Editare"
+
+msgid "Edit Quick Action"
+msgstr "Editează acțiunile rapide"
+
+msgid "Enable at least 2 modules to arrange."
+msgstr "Activează cel puțin 2 module pentru a le aranja."
+
+msgid "Extra Small"
+msgstr "Extra mic"
+
+msgid "Favorites"
+msgstr "Favorite"
+
+msgid "Favorites not available."
+msgstr "Favoritele nu sunt disponibile."
+
+msgid "File Search"
+msgstr "Căutare de fișiere"
+
+msgid "Folder"
+msgstr "Dosar"
+
+msgid "Folder Shortcuts"
+msgstr "Scurtături către dosare"
+
+msgid ""
+"Folder not found:\n"
+"%s"
+msgstr ""
+"Dosar negăsit:\n"
+"%s"
+
+msgid "Frontlight not available on this device."
+msgstr "Lumina frontală nu este disponibilă pe acest dispozitiv."
+
+msgid "Header"
+msgstr "Antet"
+
+msgid "Header Text"
+msgstr "Text antet"
+
+msgid "History"
+msgstr "Istoric"
+
+msgid "History not available."
+msgstr "Istoricul nu este disponibil."
+
+msgid "Home"
+msgstr "Acasă"
+
+msgid "Home Screen"
+msgstr "Ecranul de acasă"
+
+msgid "Homescreen"
+msgstr "Ecran principal"
+
+msgid "Homescreen not available."
+msgstr "Ecranul principal nu este disponibil."
+
+msgid "Icon"
+msgstr "Pictogramă"
+
+msgid "Icon: Default"
+msgstr "Pictogramă: Implicit"
+
+msgid "Icons"
+msgstr "Pictograme"
+
+msgid "Icons only"
+msgstr "Doar pictograme"
+
+msgid ""
+"Invalid arrangement.\n"
+"Keep items between the Left and Right separators."
+msgstr ""
+"Aranjament invalid.\n"
+"Păstrați articolele între separatoarele din stânga și dreapta."
+
+msgid "Items"
+msgstr "Articole"
+
+msgid "Large"
+msgstr "Mare"
+
+msgid "Later"
+msgstr "Mai târziu"
+
+msgid "Left"
+msgstr "Stânga"
+
+msgid "Library"
+msgstr "Bibliotecă"
+
+msgid "Maximum %d actions per module reached. Remove one first."
+msgstr ""
+"Numărul maxim %d de acțiuni pe modul a fost atins. Șterge una mai întâi."
+
+msgid "Maximum %d modules active. Disable one first."
+msgstr "Maxim %d de module active. Șterge unul mai întâi."
+
+msgid "Maximum %d quick actions reached. Delete one first."
+msgstr "Numărul maxim %d de acțiuni rapide a fost atins. Șterge una mai întâi."
+
+msgid "Maximum %d stats per row. Remove one first."
+msgstr ""
+"Numărul maxim %d de statistici pe rând a fost atins. Șterge una mai întâi."
+
+msgid "Maximum %d tabs reached. Remove one first."
+msgstr "Numărul maxim %d de file a fost atins. Șterge una mai întâi."
+
+msgid "Maximum 5 collections. Remove one first."
+msgstr "Maxim 5 colecții. Șterge una mai întâi."
+
+msgid "Minimum 2 tabs required. Select another tab first."
+msgstr "Minim 2 file necesare. Alegeți altă filă mai întâi."
+
+msgid "Minutes per day:"
+msgstr "Minute pe zi:"
+
+msgid "Module Settings"
+msgstr "Setări de modul"
+
+msgid ""
+"Module limit disabled. Enabling too many modules may slow down the "
+"homescreen significantly and modules may be clipped at the bottom of the "
+"page."
+msgstr ""
+"Limita de module a fost dezactivată. Activarea prea multor module poate "
+"încetini ecranul principal semnificativ iar modulele pot fi tăiate în partea "
+"de jos a paginii."
+
+msgid "Modules  (%d — no limit)"
+msgstr "Module  (%d — fără limită)"
+
+msgid "Modules  (%d/%d — %d left)"
+msgstr "Module  (%d/%d - %d rămase)"
+
+msgid "Modules  (%d/%d — at limit)"
+msgstr "Module  (%d/%d — la limită)"
+
+msgid "Name"
+msgstr "Nume"
+
+msgid "Network manager unavailable."
+msgstr "Managerul de rețea este indisponibil."
+
+msgid "New Quick Action"
+msgstr "Acțiune rapidă nouă"
+
+msgid "No Module Limit  ⚠ not recommended"
+msgstr "Fără limită de module  ⚠ Nerecomandat"
+
+msgid "No book in history."
+msgstr "Fără cărți în istoric."
+
+msgid "No books opened yet"
+msgstr "Nicio carte deschisă încă"
+
+msgid "No collections found."
+msgstr "Nu au fost găsite colecții."
+
+msgid "No collections selected"
+msgstr "Nicio colecție selectată"
+
+msgid ""
+"No folder, collection or plugin configured.\n"
+"Go to Simple UI → Settings → Quick Actions to set one."
+msgstr ""
+"Nu a fost configurat niciun dosar, colecție sau plugin.\n"
+"Accesați Simple UI → Setări → Acțiuni rapide pentru a seta una."
+
+msgid "No icons found in:"
+msgstr "Nicio pictogramă găsită în:"
+
+msgid "No plugins found."
+msgstr "Niciun plugin găsit."
+
+msgid "No quotes found."
+msgstr "Niciun citat găsit."
+
+msgid "No stats selected"
+msgstr "Nicio statistică selectată"
+
+msgid "No system actions found."
+msgstr "Nicio acțiune de sistem găsită."
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Off"
+msgstr "Oprit"
+
+msgid "On"
+msgstr "Pornit"
+
+msgid "Open a book to get started"
+msgstr "Deschide o carte pentru a începe"
+
+msgid "Pagination Bar"
+msgstr "Bara de paginare"
+
+msgid ""
+"Pagination bar size will change after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Bara de paginare se va schimba după o repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid ""
+"Pagination bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Bara de paginare va fi %s după o repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid ""
+"Path is not a folder:\n"
+"%s"
+msgstr ""
+"Calea nu este un dosar:\n"
+"%s"
+
+msgid "Physical Books — %s"
+msgstr "Cărți fizice - %s"
+
+msgid "Physical books read this year:"
+msgstr "Cărți fizice citite anul acesta:"
+
+msgid "Physical: %d books in %s"
+msgstr "Fizic: %d cărți în %s"
+
+msgid "Plugin"
+msgstr "Plugin"
+
+msgid "Plugin error: %s"
+msgstr "Eroare de plugin: %s"
+
+msgid "Plugin not available: %s"
+msgstr "Plugin indisponibil: %s"
+
+msgid "Power"
+msgstr "Alimentare"
+
+msgid "Quick Actions"
+msgstr "Acțiuni rapide"
+
+msgid "Quick Actions  (%d/%d — %d left)"
+msgstr "Acțiuni rapide  (%d/%d — %d rămas)"
+
+msgid "Quick Actions  (%d/%d — at limit)"
+msgstr "Acțiuni rapide  (%d/%d — la limită)"
+
+msgid "Quick Actions %d"
+msgstr "Acțiuni rapide %d"
+
+msgid "Quit"
+msgstr "Ieșire"
+
+msgid "Quote of the Day"
+msgstr "Citatul zilei"
+
+msgid "RAM Usage"
+msgstr "Utilizare RAM"
+
+msgid "Reading Goals"
+msgstr "Obiective de citit"
+
+msgid "Reading Stats"
+msgstr "Statistici de citit"
+
+msgid "Recent Books"
+msgstr "Cărți recente"
+
+msgid "Restart"
+msgstr "Repornire"
+
+msgid "Right"
+msgstr "Dreapta"
+
+msgid "Save"
+msgstr "Salvare"
+
+msgid "Select at least 2 collections to arrange."
+msgstr "Selectează cel puțin 2 colecții pentru a le aranja."
+
+msgid "Settings"
+msgstr "Setări"
+
+msgid "Show Labels"
+msgstr "Afișează etichete"
+
+msgid "Simple UI"
+msgstr "Simple UI"
+
+msgid ""
+"Simple UI will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Simple UI va fi %s după o repornire\n"
+"\n"
+"Reporniți acum"
+
+msgid "Size"
+msgstr "Mărime"
+
+msgid "Small"
+msgstr "Mic"
+
+msgid "Start with"
+msgstr "Începe cu"
+
+msgid "Start with Home Screen"
+msgstr "Începe cu ecranul de acasă"
+
+msgid "Statistics plugin not available."
+msgstr "Plugin-ul de statistici nu este disponibil."
+
+msgid "Stats"
+msgstr "Statistici"
+
+msgid "Streak"
+msgstr "Serie"
+
+msgid "Swipe Indicator"
+msgstr "Indicator de glisare"
+
+msgid "System Actions"
+msgstr "Acțiuni de sistem"
+
+msgid "System action error: %s"
+msgstr "Eroare la acțiune de sistem: %s"
+
+msgid "Tabs  (%d/%d — %d left)"
+msgstr "File  (%d/%d — %d rămas)"
+
+msgid "Tabs  (%d/%d — at limit)"
+msgstr "File  (%d/%d — la limită)"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Text only"
+msgstr "Doar text"
+
+msgid "Today"
+msgstr "Astăzi"
+
+msgid "Today — Pages"
+msgstr "Astăzi — Pagini"
+
+msgid "Today — Time"
+msgstr "Astăzi — Timp"
+
+msgid "Top Bar"
+msgstr "Bara de sus"
+
+msgid ""
+"Top Bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Bara de sus va fi %s după o repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid "Type"
+msgstr "Tip"
+
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
+msgid "Wi-Fi off"
+msgstr "Wi-Fi oprit"
+
+msgid "WiFi"
+msgstr "Wi-Fi"
+
+msgid "WiFi not available on this device."
+msgstr "Wi-Fi nu este disponibil pe acest dispozitiv."
+
+msgid "Wikipedia Lookup"
+msgstr "Căutare pe Wikipedia"
+
+msgid "books finished"
+msgstr "cărți terminate"
+
+msgid "daily avg (7 days)"
+msgstr "media zilnică (7 zile)"
+
+msgid "day streak"
+msgstr "zi în serie"
+
+msgid "days streak"
+msgstr "zile în serie"
+
+msgid "disabled"
+msgstr "Dezactivat"
+
+msgid "e.g. Books…"
+msgstr "de ex., cărți…"
+
+msgid "e.g. My Library"
+msgstr "de ex., Biblioteca mea…"
+
+msgid "e.g. Rakuyomi…"
+msgstr "de ex., Rakuyomi…"
+
+msgid "e.g. Sci-Fi…"
+msgstr "de ex., Sci-Fi…"
+
+msgid "e.g. Sleep, Refresh…"
+msgstr "de ex., Repaus, Reîmprospătare…"
+
+msgid "enabled"
+msgstr "activat"
+
+msgid "hidden"
+msgstr "ascuns"
+
+msgid "not configured"
+msgstr "neconfigurat"
+
+msgid "of reading today"
+msgstr "de citit astăzi"
+
+msgid "of reading, all time"
+msgstr "de citit, din toate timpurile"
+
+msgid "pages read today"
+msgstr "pagini citite astăzi"
+
+msgid "pages/day (7 days)"
+msgstr "pagini/zi (7 zile)"
+
+msgid "visible"
+msgstr "vizibil"
+
+msgid "Arrange Buttons"
+msgstr "Aranjează butoanele"
+
+msgid "Back"
+msgstr "Înapoi"
+
+msgid "Button Size"
+msgstr "Mărime buton"
+
+msgid "Close"
+msgstr "Închide"
+
+msgid "Custom Title Bar"
+msgstr "Bară de titlu personalizată"
+
+msgid ""
+"Custom Title Bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Bara de titlu personalizată va fi % după o repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid "Library Buttons"
+msgstr "Butoane bibliotecă"
+
+msgid "Menu"
+msgstr "Meniu"
+
+msgid "More Options"
+msgstr "Mai multe opțiuni"
+
+msgid "Sub-pages Buttons"
+msgstr "Butoane pentru sub-pagini"
+
+msgid "Title"
+msgstr "Titlu"
+
+msgid "Title Bar"
+msgstr "Bara de titlu"
+
+msgid "Search"
+msgstr "Căutare"
+
+msgid "Delete quick action \"%s\"?"
+msgstr "Șterge acțiunea rapidă \"%s\"?"
+
+msgid "Show Date"
+msgstr "Arată data"
+
+msgid "Show Battery"
+msgstr "Arată bateria"
+
+msgid "Cards"
+msgstr "Carduri"
+
+msgid "List"
+msgstr "Listă"
+
+msgid "Cover for \"%s\""
+msgstr "Copertă pentru \"%s\""
+
+msgid "    Size"
+msgstr "    Mărime"
+
+msgid "Apply"
+msgstr "Aplică"
+
+msgid "Bookmark browser"
+msgstr "Browser de marcaje"
+
+msgid "Bookmark browser not available."
+msgstr "Browserul de marcaje este indisponibil"
+
+msgid "Bookmarks"
+msgstr "Marcaje"
+
+msgid "Bottom"
+msgstr "Partea de jos"
+
+msgid "Bottom Bar Size"
+msgstr "Mărimea barei de jos"
+
+msgid "Change Icons"
+msgstr "Schimbă pictogramele"
+
+msgid "Cover size"
+msgstr "Mărimea coperții"
+
+msgid "Cover size  —  %d%%"
+msgstr "Mărimea coperții  —  %d%%"
+
+msgid "Fetching bookmarks…"
+msgstr "Se încarcă marcajele…"
+
+msgid ""
+"Global scale for all modules.\n"
+"Individual overrides in Module Settings take precedence.\n"
+"100% is the default size."
+msgstr ""
+"Setare globală pentru toate modulele.\n"
+"Setările individuale din „Setări module” au prioritate.\n"
+"Dimensiunea implicită este 100%."
+
+msgid ""
+"Height of the bottom navigation bar.\n"
+"100% is the default size."
+msgstr ""
+"Înălțimea barei de navigare din partea de jos.\n"
+"100% este înălțimea implicită."
+
+msgid ""
+"Height of the top status bar.\n"
+"100% is the default size."
+msgstr ""
+"Înălțimea barei de status din partea de sus.\n"
+"100% este înălțimea implicită."
+
+msgid "Hidden"
+msgstr "Ascuns"
+
+msgid "Home folder"
+msgstr "Dosarul principal"
+
+msgid "Home folder + subfolders"
+msgstr "Dosarul principal + subdosare"
+
+msgid "Label Scale"
+msgstr "Mărime etichete"
+
+msgid "Labels  —  %d%%"
+msgstr "Etichete  —  %d%%"
+
+msgid "Minimum 1 tab required in navpager mode."
+msgstr "Cel puțin 1 filă este necesară în modul navpager."
+
+msgid "Module Scale"
+msgstr "Scară module"
+
+msgid "Modules  —  %d%%"
+msgstr "Module  —  %d%%"
+
+msgid "Navigation Bar"
+msgstr "Bara de navigare"
+
+msgid "Navpager"
+msgstr "Navpager"
+
+msgid ""
+"Navpager will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Navpager va fi %s după o repornire.\n"
+"\n"
+"Reporniți acum?"
+
+msgid "New name…"
+msgstr "Nume nou…"
+
+msgid "Next"
+msgstr "Următor"
+
+msgid "No highlights found. Open a book and highlight some passages."
+msgstr "Nu au fost găsite marcaje. Deschide o carte și marchează niște pasaje."
+
+msgid "Page %1 of %2"
+msgstr "Pagina %1 din %2"
+
+msgid "Page number in title bar"
+msgstr "Numărul de pagină în bara de titlu."
+
+msgid "Prev"
+msgstr "Anterior"
+
+msgid "Rename"
+msgstr "Redenumește"
+
+msgid ""
+"Replaces the pagination bar with Prev/Next arrows at the edges of the bottom "
+"bar.\n"
+"The arrows dim when there is no previous or next page.\n"
+"With navpager active, as few as 1 tab and at most 4 tabs can be configured."
+msgstr ""
+"Înlocuiește bara de paginare cu săgețile „Anterior/Următor” amplasate la "
+"marginile barei de jos.\n"
+"Săgețile se estompează atunci când nu există nicio pagină anterioară sau "
+"următoare.\n"
+"Când navpager este activ, se pot configura între 1 și 4 file."
+
+msgid "Reset"
+msgstr "Resetează"
+
+msgid "Reset all scales to default (100%)? This cannot be undone."
+msgstr ""
+"Resetați toate scalările la valoarea implicită (100%)? Această acțiune nu "
+"poate fi anulată."
+
+msgid "Reset to Default Scale"
+msgstr "Resetează la scala implicită"
+
+msgid "Scale"
+msgstr "Scală"
+
+msgid "Scale  —  %d%%"
+msgstr "Scală  —  %d%%"
+
+msgid "Scale  —  %d%% / %d%%"
+msgstr "Scală  —  %d%% / %d%%"
+
+msgid ""
+"Scale for the collection thumbnails only.\n"
+"The label text follows the module scale.\n"
+"100% is the default size."
+msgstr ""
+"Scară doar pentru miniaturile pentru colecții.\n"
+"Textul etichetei urmează scala modulelor.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scales all modules and labels together.\n"
+"100% is the default size."
+msgstr ""
+"Scalează toate modulele și etichetele împreună.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scales the section label text above each module.\n"
+"100% is the default size."
+msgstr ""
+"Scalează textul etichetei de selecție deasupra fiecărui modul.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Simple UI was updated (%s → %s).\n"
+"\n"
+"A restart is recommended to apply all changes cleanly."
+msgstr ""
+"Simple UI a fost actualizat (%s → %s).\n"
+"\n"
+"O repornire este recomandată pentru a aplica toate schimbările în mod "
+"corespunzător."
+
+msgid "Size  —  %d%%"
+msgstr "Mărime  —  %d%%"
+
+msgid "Status Bar"
+msgstr "Bara de status"
+
+msgid "Top"
+msgstr "Vârf"
+
+msgid "Top Bar Size"
+msgstr "Mărimea barei din vârf"
+
+msgid "Top separator"
+msgstr "Separator din vârf"
+
+msgid "Visible"
+msgstr "Vizibil"
+
+msgid "Your highlights"
+msgstr "Marcajele tale"
+
+msgid "Lock Scale"
+msgstr "Scala de blocare"
+
+msgid "Disable \"Lock Scale\" first to set a per-module scale."
+msgstr ""
+"Dezactivează \"Scala de blocare\" mai întâi pentru a seta o scală pe modul."
+
+msgid "Disable \"Lock Scale\" first to set a custom label scale."
+msgstr ""
+"Dezactivează \"Scala de blocare\" mai întâi pentru a seta text personalizat "
+"pe etichete."
+
+msgid "Text Size"
+msgstr "Mărime text"
+
+msgid "Modules"
+msgstr "Module"
+
+msgid "Labels"
+msgstr "Etichete"
+
+msgid ""
+"Scale for this module.\n"
+"100% is the default size."
+msgstr ""
+"Scala pentru acest modul.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scale for the collection name text.\n"
+"100% is the default size."
+msgstr ""
+"Scala pentru textul numelui colecției.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scale for the cover thumbnail only.\n"
+"100% is the default size."
+msgstr ""
+"Scala doar pentru miniatură.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scale for all text elements (title, author, progress, time).\n"
+"100% is the default size."
+msgstr ""
+"Scala pentru toate elementele (titlu, autor, progres, timp).\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scale for the button label text.\n"
+"100% is the default size."
+msgstr "Scala doar pentru miniatură."
+
+msgid ""
+"Scale for the cover thumbnails only.\n"
+"Text and progress bar follow the module scale.\n"
+"100% is the default size."
+msgstr ""
+"Scala doar pentru miniaturi.\n"
+"Text și bare de progress urmăresc aceeași scală de modul.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Scale for the percentage read text.\n"
+"100% is the default size."
+msgstr ""
+"Scala pentru textul de procentaj citit.\n"
+"100% este mărimea implicită."
+
+msgid "Source"
+msgstr "Sursă"
+
+msgid "Default Quotes"
+msgstr "Citate implicite"
+
+msgid "My Highlights"
+msgstr "Marcajele mele"
+
+msgid "Quotes + My Highlights"
+msgstr "Citate + Marcajele mele"
+
+msgid "default"
+msgstr "implicit"
+
+msgid ""
+"Shows \"Page X of Y\" in the title bar subtitle when browsing the library, "
+"history or collections.\n"
+"Navpager enables this automatically.\n"
+"Not available when Navpager is active."
+msgstr ""
+"Arată \"Pagina X din Y\" în subtitlul barei de titlu atunci când răsfoiți "
+"biblioteca, istoricul sau colecții.\n"
+"Navpager activează acest lucru automat.\n"
+"Nu este disponibil când Navpager este activ."
+
+msgid "Icon Size"
+msgstr "Mărime pictograme"
+
+msgid "Icon Size — %d%%"
+msgstr "Mărime pictograme — %d%%"
+
+msgid "Label Size"
+msgstr "Mărime eichete"
+
+msgid "Label Size — %d%%"
+msgstr "Mărime eichete — %d%%"
+
+msgid ""
+"Size of the tab icons.\n"
+"100% is the default size."
+msgstr ""
+"Mărimea pictogramelor filelor.\n"
+"100% este mărimea implicită."
+
+msgid ""
+"Size of the tab label text.\n"
+"100% is the default size."
+msgstr ""
+"Mărimea etichetelor filelor.\n"
+"100% este mărimea implicită."
+
+msgid "Folder Covers"
+msgstr "Coperți dosare"
+
+msgid "Folder cover"
+msgstr "Copertă dosar"
+
+msgid "Set folder cover…"
+msgstr "Setează copertă pentru dosar…"
+
+msgid "No books found in this folder."
+msgstr "Nu au fost găsite cărți în acest dosar."
+
+msgid "Badge"
+msgstr "Insignă"
+
+msgid "Center"
+msgstr "Centru"
+
+msgid "Label"
+msgstr "Etichetă"
+
+msgid "Show label"
+msgstr "Arată eticheta"
+
+msgid "Transparent"
+msgstr "Transparent"
+
+msgid "Hide selection underline"
+msgstr "Ascunde sublinierea selecției"
+
+msgid "Author"
+msgstr "Autor"
+
+msgid "Progress bar"
+msgstr "Bară de progres"
+
+msgid "Percentage read"
+msgstr "Procentaj citit."

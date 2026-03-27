@@ -33,7 +33,7 @@ local _CLR_CARD_BDR  = Blitbuffer.gray(0.72)
 local _BASE_RS_CORNER_R = Screen:scaleBySize(12)
 local _BASE_RS_GAP      = Screen:scaleBySize(12)
 local _BASE_RS_CARD_H   = Screen:scaleBySize(96)
-local _BASE_RS_VAL_FS   = Screen:scaleBySize(22)
+local _BASE_RS_VAL_FS   = Screen:scaleBySize(14)
 local _BASE_RS_LBL_FS   = Screen:scaleBySize(8)
 local _BASE_RS_SEP_W    = Screen:scaleBySize(1)
 local _BASE_RS_PH_FS    = Screen:scaleBySize(11)  -- placeholder "No stats" text
@@ -82,53 +82,6 @@ table.sort(_sorted_pool, function(a, b) return a.label:lower() < b.label:lower()
 -- ---------------------------------------------------------------------------
 -- Sidecar status helpers
 -- ---------------------------------------------------------------------------
-
--- Counts all books the user explicitly marked as read ("complete") by iterating
--- ReadHistory and reading only the ["summary"] block of each sidecar.
--- Skips annotations/highlights that appear before summary alphabetically.
-local function _countAllMarkedRead()
-    local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
-    if not ok_lfs then return 0 end
-    local ok_DS, DocSettings = pcall(require, "docsettings")
-    if not ok_DS then return 0 end
-
-    local ReadHistory = package.loaded["readhistory"]
-    if not ReadHistory or not ReadHistory.hist then return 0 end
-
-    local count = 0
-    for _, entry in ipairs(ReadHistory.hist) do
-        local fp = entry.file
-        if fp and lfs.attributes(fp, "mode") == "file" then
-            local sidecar = DocSettings:findSidecarFile(fp)
-            if sidecar then
-                local f = io.open(sidecar, "r")
-                if f then
-                    local in_summary = false
-                    local found = false
-                    for line in f:lines() do
-                        if not in_summary then
-                            if line:find('["summary"]', 1, true) then
-                                in_summary = true
-                            end
-                        else
-                            if line:find('"complete"', 1, true)
-                               and line:find('"status"', 1, true) then
-                                found = true
-                                break
-                            end
-                            if line:find("^%s*},?%s*$") then break end
-                        end
-                    end
-                    f:close()
-                    if found then count = count + 1 end
-                end
-            end
-        end
-    end
-    return count
-end
-
--- ---------------------------------------------------------------------------
 -- DB fetch
 -- ---------------------------------------------------------------------------
 local _stats_cache     = nil
@@ -154,7 +107,7 @@ local function fetchAllStats(shared_conn)
         -- Use '@' as separator — avoids the integer ambiguity of '-'
         -- (page=10, id_book=1 vs page=1, id_book=01 both collapse to "10-1").
         r.today_pages = tonumber(conn:rowexec(string.format(
-            "SELECT count(DISTINCT page||'@'||id_book) FROM page_stat WHERE start_time>=%d;",
+            "SELECT count(DISTINCT page||'@'||id_book) FROM page_stat WHERE start_time>=%d AND duration>0;",
             start_today))) or 0
 
         -- Aggregate per-day first (inner GROUP BY dates), then average across days
@@ -168,7 +121,7 @@ local function fetchAllStats(shared_conn)
             FROM (SELECT strftime('%%Y-%%m-%%d',start_time,'unixepoch','localtime') AS dates,
                          sum(duration) AS sd,
                          count(DISTINCT page||'@'||id_book) AS pg
-                  FROM page_stat WHERE start_time>=%d
+                  FROM page_stat WHERE start_time>=%d AND duration>0
                   GROUP BY dates);]], week_start))
         if rw and rw[1] and rw[1][1] then
             local nd = tonumber(rw[1][1]) or 0
@@ -200,16 +153,17 @@ local function fetchAllStats(shared_conn)
                 WHERE EXISTS (SELECT 1 FROM dated WHERE d = date(streak.d,'-1 day')))
             SELECT CASE
                 WHEN (SELECT max(d) FROM dated) >= date(%d,'unixepoch','localtime','-1 day')
-                THEN (SELECT max(n) FROM streak)
+                THEN COALESCE((SELECT max(n) FROM streak), 0)
                 ELSE 0 END;]], start_today))
         r.streak = tonumber(streak_val) or 0
     end)
     if not ok then logger.warn("simpleui: reading_stats: fetchAllStats failed: " .. tostring(err)) end
     if own_conn then pcall(function() conn:close() end) end
 
-    -- Count finished books via sidecar status — respects the user's explicit
-    -- "Mark as read" rather than guessing from page coverage in the stats DB.
-    r.total_books = _countAllMarkedRead()
+    -- Count finished books via sidecar status — uses the shared DocSettings
+    -- implementation (all-time, no year filter).
+    local SH = require("desktop_modules/module_books_shared")
+    r.total_books = SH.countMarkedRead()
 
     return r
 end
@@ -266,7 +220,37 @@ local function buildStatCardWidget(card_w, stat_id, stats, d)
     }
 end
 
--- List mode: left-aligned content, right-border separator via OverlapGroup.
+-- Flat mode: no border, tinted background, content centred.
+local _CLR_FLAT_BG = Blitbuffer.gray(0.08)
+local function buildStatFlatWidget(card_w, stat_id, stats, d)
+    local entry = STAT_MAP[stat_id]
+    if not entry then return nil end
+    local val_str = entry.value(stats)
+    local lbl_str = entry.label_fn and entry.label_fn(stats) or entry.label
+    return FrameContainer:new{
+        dimen      = Geom:new{ w = card_w, h = d.card_h },
+        bordersize = 0,
+        background = _CLR_FLAT_BG,
+        radius     = d.corner_r,
+        padding    = 0,
+        CenterContainer:new{
+            dimen = Geom:new{ w = card_w, h = d.card_h },
+            VerticalGroup:new{ align = "center",
+                TextWidget:new{
+                    text    = val_str,
+                    face    = Font:getFace("smallinfofont", d.val_fs),
+                    bold    = true,
+                    fgcolor = _CLR_TEXT_BLK,
+                },
+                TextWidget:new{
+                    text    = lbl_str,
+                    face    = Font:getFace("cfont", d.lbl_fs),
+                    fgcolor = CLR_TEXT_SUB,
+                },
+            },
+        },
+    }
+end
 local function buildStatListCell(cell_w, stat_id, stats, show_sep, d)
     local entry = STAT_MAP[stat_id]
     if not entry then return nil end
@@ -393,8 +377,6 @@ function M.build(w, ctx)
     local mode   = getType(ctx.pfx)
     local row    = HorizontalGroup:new{ align = "center" }
 
-    local label_h = require("sui_config").getScaledLabelH()
-
     if mode == "list" then
         local cell_w = math.floor(w / n)
         for i = 1, n do
@@ -414,21 +396,26 @@ function M.build(w, ctx)
         end
 
         return FrameContainer:new{
-            dimen       = Geom:new{ w = w, h = label_h + d.card_h },
-            bordersize  = 0, padding = 0,
-            padding_top = label_h,
+            dimen      = Geom:new{ w = w, h = d.card_h },
+            bordersize = 0, padding = 0,
             row,
         }
     else
-        -- Cards mode: rounded bordered cards with gaps between them.
+        -- Cards / Flat mode: rounded cards with gaps between them.
+        -- "flat" = no border, tinted background; "cards" = bordered white.
         local avail_w = w - PAD * 2
         local card_w  = math.floor((avail_w - d.gap * (n - 1)) / n)
         for i = 1, n do
-            local card = buildStatCardWidget(card_w, stat_ids[i], stats, d)
-                      or FrameContainer:new{
-                             dimen = Geom:new{ w = card_w, h = d.card_h },
-                             bordersize = 0, padding = 0,
-                         }
+            local card
+            if mode == "flat" then
+                card = buildStatFlatWidget(card_w, stat_ids[i], stats, d)
+            else
+                card = buildStatCardWidget(card_w, stat_ids[i], stats, d)
+            end
+            card = card or FrameContainer:new{
+                dimen = Geom:new{ w = card_w, h = d.card_h },
+                bordersize = 0, padding = 0,
+            }
             local tappable = InputContainer:new{
                 dimen = Geom:new{ w = card_w, h = d.card_h },
                 [1]   = card,
@@ -442,9 +429,8 @@ function M.build(w, ctx)
         end
 
         return FrameContainer:new{
-            dimen       = Geom:new{ w = w, h = label_h + d.card_h },
-            bordersize  = 0, padding = 0,
-            padding_top = label_h,
+            dimen      = Geom:new{ w = w, h = d.card_h },
+            bordersize = 0, padding = 0,
             CenterContainer:new{
                 dimen = Geom:new{ w = w, h = d.card_h },
                 row,
@@ -455,7 +441,7 @@ end
 
 function M.getHeight(_ctx)
     local card_h = math.floor(_BASE_RS_CARD_H * Config.getModuleScale("reading_stats", _ctx and _ctx.pfx))
-    return Config.getScaledLabelH() + card_h
+    return card_h
 end
 
 
@@ -511,6 +497,16 @@ function M.getMenuItems(ctx_menu)
                     checked_func   = function() return getType(pfx) == "cards" end,
                     callback       = function()
                         G_reader_settings:saveSetting(pfx .. SETTING_TYPE, "cards")
+                        refresh()
+                    end,
+                },
+                {
+                    text           = _lc("Flat"),
+                    radio          = true,
+                    keep_menu_open = true,
+                    checked_func   = function() return getType(pfx) == "flat" end,
+                    callback       = function()
+                        G_reader_settings:saveSetting(pfx .. SETTING_TYPE, "flat")
                         refresh()
                     end,
                 },

@@ -19,8 +19,8 @@ local SH = {}
 -- Base dimensions — computed once at load time from device DPI.
 -- These are the 100%-scale reference values; never modify them at runtime.
 -- ---------------------------------------------------------------------------
-local _BASE_COVER_W  = Screen:scaleBySize(102)
-local _BASE_COVER_H  = Screen:scaleBySize(153)
+local _BASE_COVER_W  = Screen:scaleBySize(122)
+local _BASE_COVER_H  = Screen:scaleBySize(184)
 local _BASE_RECENT_W = Screen:scaleBySize(75)
 local _BASE_RECENT_H = Screen:scaleBySize(112)
 local _BASE_RB_GAP1    = Screen:scaleBySize(4)
@@ -131,6 +131,30 @@ end
 -- ---------------------------------------------------------------------------
 -- coverPlaceholder
 -- ---------------------------------------------------------------------------
+-- Helper function to safely extract first n UTF-8 characters for placeholder text
+local function safeFirstChars(s, n)
+    if not s or n <= 0 then return "" end
+    local chars = {}
+    local i = 1
+    local count = 0
+    while i <= #s and count < n do
+        local byte = s:byte(i)
+        -- Calculate the byte length of the current UTF-8 character
+        local charLen = 1
+        if byte >= 240 then
+            charLen = 4
+        elseif byte >= 224 then
+            charLen = 3
+        elseif byte >= 192 then
+            charLen = 2
+        end
+        chars[#chars + 1] = s:sub(i, i + charLen - 1)
+        count = count + 1
+        i = i + charLen
+    end
+    return table.concat(chars)
+end
+
 function SH.coverPlaceholder(title, w, h)
     return FrameContainer:new{
         bordersize = 1, color = _CLR_COVER_BORDER,
@@ -139,7 +163,7 @@ function SH.coverPlaceholder(title, w, h)
         require("ui/widget/container/centercontainer"):new{
             dimen = Geom:new{ w = w, h = h },
             require("ui/widget/textwidget"):new{
-                text = (title or "?"):sub(1, 2):upper(),
+                text = safeFirstChars(title or "?", 2):upper(),
                 face = Font:getFace("smallinfofont", Screen:scaleBySize(18)),
                 bold = true,
             },
@@ -303,13 +327,16 @@ function SH.prefetchBooks(show_currently, show_recent)
     end
 
     local DS = getDocSettings()
-    -- When only Recent is needed, skip history[1] (currently reading) entirely.
-    local start_i = show_currently and 1 or 2
-    for i = start_i, #(ReadHistory.hist or {}) do
+    -- hist[1] is the most recently read book.
+    -- • show_currently=true  → claim it as current_fp; never add to recent_fps.
+    -- • show_currently=false → treat it like any other entry for recent_fps.
+    -- Always start at index 1 so hist[1] is never silently dropped.
+    for i = 1, #(ReadHistory.hist or {}) do
         local entry = ReadHistory.hist[i]
         local fp = entry and entry.file
         if fp and lfs.attributes(fp, "mode") == "file" then
             if i == 1 and show_currently then
+                -- Claim as currently-reading book.
                 state.current_fp = fp
                 if DS then
                     local ok2, ds = pcall(DS.open, DS, fp)
@@ -332,7 +359,9 @@ function SH.prefetchBooks(show_currently, show_recent)
                         state.prefetched_data[fp] = false
                     end
                 end
-            elseif i > 1 and show_recent and #state.recent_fps < 5 then
+            elseif show_recent and #state.recent_fps < 5 then
+                -- i==1 only reaches here when show_currently==false, so hist[1]
+                -- is correctly included in recent rather than being skipped.
                 local pct = 0
                 if DS then
                     local ok2, ds = pcall(DS.open, DS, fp)
@@ -361,6 +390,67 @@ function SH.prefetchBooks(show_currently, show_recent)
         if state.current_fp and #state.recent_fps >= 5 then break end
     end
     return state
+end
+
+
+-- ---------------------------------------------------------------------------
+-- Sidecar helpers
+-- ---------------------------------------------------------------------------
+
+-- Counts books the user explicitly marked as read (summary.status = "complete")
+-- by iterating ReadHistory and loading each sidecar via DocSettings.
+-- Optional year_str (e.g. "2025") filters by summary.modified; pass nil for
+-- an all-time count. Handles modified stored as unix timestamp (number),
+-- ISO-8601 string, or os.date("*t") table.
+function SH.countMarkedRead(year_str)
+    local ok_DS, DocSettings = pcall(require, "docsettings")
+    if not ok_DS then return 0 end
+
+    local ReadHistory = package.loaded["readhistory"]
+    if not ReadHistory or not ReadHistory.hist then return 0 end
+
+    local function modifiedInYear(summary)
+        if not year_str then return true end
+        local mod = summary and summary.modified
+        if mod == nil then return false end
+        if type(mod) == "number" then
+            return os.date("%Y", mod) == year_str
+        end
+        if type(mod) == "string" then
+            if #mod >= 4 and mod:sub(1, 4) == year_str then return true end
+            local ok_t, t = pcall(function()
+                return os.time({
+                    year  = tonumber(mod:sub(1, 4)),
+                    month = tonumber(mod:sub(6, 7)) or 1,
+                    day   = tonumber(mod:sub(9, 10)) or 1,
+                    hour  = 12,
+                })
+            end)
+            if ok_t and t and os.date("%Y", t) == year_str then return true end
+            return false
+        end
+        if type(mod) == "table" and mod.year then
+            return tostring(mod.year) == year_str
+        end
+        return false
+    end
+
+    local count = 0
+    for _, entry in ipairs(ReadHistory.hist) do
+        local fp = entry.file
+        if fp and lfs.attributes(fp, "mode") == "file" then
+            local ok_open, doc_settings = pcall(function() return DocSettings:open(fp) end)
+            if ok_open and doc_settings then
+                local ok_sum, summary = pcall(function() return doc_settings:readSetting("summary") end)
+                if ok_sum and type(summary) == "table" and summary.status == "complete"
+                    and modifiedInYear(summary) then
+                    count = count + 1
+                end
+                pcall(function() doc_settings:close() end)
+            end
+        end
+    end
+    return count
 end
 
 return SH

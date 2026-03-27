@@ -151,7 +151,7 @@ end
 -- Returns the normalised topbar config, migrating legacy formats when needed.
 function M.getTopbarConfig()
     local raw = G_reader_settings:readSetting("navbar_topbar_config")
-    local cfg = { side = {}, order_left = {}, order_right = {}, show = {}, order = {} }
+    local cfg = { side = {}, order_left = {}, order_right = {}, order_center = {}, show = {}, order = {} }
     if type(raw) == "table" then
         if type(raw.side) == "table" then
             for k, v in pairs(raw.side) do cfg.side[k] = v end
@@ -161,6 +161,9 @@ function M.getTopbarConfig()
         end
         if type(raw.order_right) == "table" then
             for _i, v in ipairs(raw.order_right) do cfg.order_right[#cfg.order_right + 1] = v end
+        end
+        if type(raw.order_center) == "table" then
+            for _i, v in ipairs(raw.order_center) do cfg.order_center[#cfg.order_center + 1] = v end
         end
         if not next(cfg.side) and type(raw.show) == "table" then
             for k, v in pairs(raw.show) do
@@ -191,6 +194,12 @@ function M.getTopbarConfig()
     if #cfg.order_right == 0 then
         for k, s in pairs(cfg.side) do
             if s == "right" then cfg.order_right[#cfg.order_right + 1] = k end
+        end
+    end
+    -- Sync order_center from side map (items assigned to "center")
+    if #cfg.order_center == 0 then
+        for k, s in pairs(cfg.side) do
+            if s == "center" then cfg.order_center[#cfg.order_center + 1] = k end
         end
     end
     return cfg
@@ -569,6 +578,50 @@ function M.sanitizeLabel(s)
     return s
 end
 
+-- ---------------------------------------------------------------------------
+-- Nerd Font icon helpers
+--
+-- Nerd Font icons are stored as the sentinel string "nerd:XXXX" where XXXX
+-- is a 1–6 digit hexadecimal Unicode codepoint (e.g. "nerd:E001").
+-- This keeps the icon field a plain string and requires no schema changes.
+-- The symbols.ttf file shipped with KOReader is registered by the Font module
+-- under the face name "symbols" and covers the full Nerd Fonts symbol range.
+-- ---------------------------------------------------------------------------
+
+-- Converts a "nerd:XXXX" sentinel to its UTF-8 encoded character.
+-- Returns the UTF-8 string on success, or nil if the value is not a Nerd icon.
+function M.nerdIconChar(icon_value)
+    if type(icon_value) ~= "string" then return nil end
+    local hex = icon_value:match("^nerd:([0-9A-Fa-f]+)$")
+    if not hex then return nil end
+    local cp = tonumber(hex, 16)
+    if not cp or cp < 0 or cp > 0x10FFFF then return nil end
+    -- Encode as UTF-8.
+    if cp < 0x80 then
+        return string.char(cp)
+    elseif cp < 0x800 then
+        return string.char(
+            0xC0 + math.floor(cp / 0x40),
+            0x80 + (cp % 0x40))
+    elseif cp < 0x10000 then
+        return string.char(
+            0xE0 + math.floor(cp / 0x1000),
+            0x80 + math.floor((cp % 0x1000) / 0x40),
+            0x80 + (cp % 0x40))
+    else
+        return string.char(
+            0xF0 + math.floor(cp / 0x40000),
+            0x80 + math.floor((cp % 0x40000) / 0x1000),
+            0x80 + math.floor((cp % 0x1000) / 0x40),
+            0x80 + (cp % 0x40))
+    end
+end
+
+-- Returns true when icon_value is a valid Nerd Font sentinel.
+function M.isNerdIcon(icon_value)
+    return M.nerdIconChar(icon_value) ~= nil
+end
+
 function M.migrateOldCustomSlots()
     if G_reader_settings:readSetting("navbar_custom_qa_migrated_v1") then return end
     local id_map  = {}
@@ -761,7 +814,7 @@ end
 -- order-list approach, with zero extra allocation per cache hit.
 -- ---------------------------------------------------------------------------
 
-local BIM_MAX_COVERS   = 8
+local BIM_MAX_COVERS   = 12
 -- _bim_cover_cache[key] = { bb = <blitbuffer>, t = <os.time()> }
 local _bim_cover_cache = {}
 local _bim_cover_count = 0
@@ -828,7 +881,33 @@ function M.getCoverBB(filepath, w, h)
     local cached = _bim_cover_cache[key]
     if cached then
         -- Update LRU access time in-place — no allocation, no list shift.
-        cached.t = os.time()
+        local now = os.time()
+        cached.t = now
+        if not cached.lowres then
+            return cached.bb
+        end
+        if cached.chk and (now - cached.chk) < 2 then
+            return cached.bb
+        end
+        cached.chk = now
+        local bim = M.getBookInfoManager()
+        if not bim then return cached.bb end
+        local ok, bookinfo = pcall(function() return bim:getBookInfo(filepath, true) end)
+        if not ok or not bookinfo then return cached.bb end
+        if not (bookinfo.cover_fetched and bookinfo.has_cover and bookinfo.cover_bb) then
+            return cached.bb
+        end
+        local src_w = bookinfo.cover_bb:getWidth()
+        local src_h = bookinfo.cover_bb:getHeight()
+        if src_w >= w and src_h >= h then
+            local bb = _scaleBBToSlot(bookinfo.cover_bb, w, h)
+            pcall(function() cached.bb:free() end)
+            cached.bb     = bb
+            cached.lowres = nil
+            cached.src_w  = src_w
+            cached.src_h  = src_h
+            return bb
+        end
         return cached.bb
     end
 
@@ -840,9 +919,21 @@ function M.getCoverBB(filepath, w, h)
     -- CORREÇÃO: Verificar se a tentativa de extração já foi feita
     if bookinfo and bookinfo.cover_fetched then
         if bookinfo.has_cover and bookinfo.cover_bb then
+            local src_w = bookinfo.cover_bb:getWidth()
+            local src_h = bookinfo.cover_bb:getHeight()
+            local lowres = (src_w < w or src_h < h)
+            if lowres and not M.cover_extraction_pending then
+                M.cover_extraction_pending = true
+                pcall(function()
+                    bim:extractInBackground({{
+                        filepath    = filepath,
+                        cover_specs = { max_cover_w = w, max_cover_h = h },
+                    }})
+                end)
+            end
             local bb = _scaleBBToSlot(bookinfo.cover_bb, w, h)
             if _bim_cover_count >= BIM_MAX_COVERS then _evictOldestCover() end
-            _bim_cover_cache[key] = { bb = bb, t = os.time() }
+            _bim_cover_cache[key] = { bb = bb, t = os.time(), lowres = lowres or nil, chk = os.time(), src_w = src_w, src_h = src_h }
             _bim_cover_count = _bim_cover_count + 1
             return bb
         else
@@ -1135,6 +1226,35 @@ M.TOPBAR_SIZE_DEF  = TOPBAR_SIZE_DEF
 M.TOPBAR_SIZE_MIN  = TOPBAR_SIZE_MIN
 M.TOPBAR_SIZE_MAX  = TOPBAR_SIZE_MAX
 M.TOPBAR_SIZE_STEP = SCALE_STEP
+
+-- ---------------------------------------------------------------------------
+-- Bottom bar bottom margin — extra space below the bar.
+-- Stored as "navbar_bottom_margin_pct" (integer %, default 100).
+-- 100% = default BOT_SP; 0% = no bottom margin.
+-- ---------------------------------------------------------------------------
+
+local BOT_MARGIN_KEY  = "navbar_bottom_margin_pct"
+local BOT_MARGIN_DEF  = 100
+local BOT_MARGIN_MIN  = 0
+local BOT_MARGIN_MAX  = 300
+local BOT_MARGIN_STEP = 10
+
+function M.getBottomMarginPct()
+    local v = G_reader_settings:readSetting(BOT_MARGIN_KEY)
+    local n = tonumber(v)
+    if not n then return BOT_MARGIN_DEF end
+    return math.max(BOT_MARGIN_MIN, math.min(BOT_MARGIN_MAX, math.floor(n)))
+end
+
+function M.setBottomMarginPct(pct)
+    G_reader_settings:saveSetting(BOT_MARGIN_KEY,
+        math.max(BOT_MARGIN_MIN, math.min(BOT_MARGIN_MAX, math.floor(pct))))
+end
+
+M.BOT_MARGIN_DEF  = BOT_MARGIN_DEF
+M.BOT_MARGIN_MIN  = BOT_MARGIN_MIN
+M.BOT_MARGIN_MAX  = BOT_MARGIN_MAX
+M.BOT_MARGIN_STEP = BOT_MARGIN_STEP
 
 -- ---------------------------------------------------------------------------
 -- Reading Stats text scale — multiplicative on top of module scale.
@@ -1468,6 +1588,87 @@ function M.makeScaleItem(opts)
                 ok_text       = _("Apply"),
                 cancel_text   = _("Cancel"),
                 default_value = opts.default_value or SCALE_DEF,
+                callback      = function(spin)
+                    opts.set(spin.value)
+                    opts.refresh()
+                end,
+            })
+        end,
+    }
+end
+
+
+-- ---------------------------------------------------------------------------
+-- Per-module gap — vertical space above each module.
+-- Setting key: <pfx><mod_id>_gap_pct  (integer %, default 100)
+-- 100% = MOD_GAP; 0% = no gap.
+-- ---------------------------------------------------------------------------
+
+local GAP_MIN  = 0
+local GAP_MAX  = 300
+local GAP_STEP = 10
+local GAP_DEF  = 100
+
+M.GAP_MIN  = GAP_MIN
+M.GAP_MAX  = GAP_MAX
+M.GAP_STEP = GAP_STEP
+M.GAP_DEF  = GAP_DEF
+
+local function _gapKey(mod_id, pfx)
+    return (pfx or "navbar_homescreen_") .. (mod_id or "") .. "_gap_pct"
+end
+
+local function _clampGap(n)
+    return math.max(GAP_MIN, math.min(GAP_MAX, math.floor(n)))
+end
+
+-- Returns gap in pixels. Falls back to mod_gap_px when no setting is saved.
+function M.getModuleGapPx(mod_id, pfx, mod_gap_px)
+    if mod_id and pfx then
+        local v = G_reader_settings:readSetting(_gapKey(mod_id, pfx))
+        local n = tonumber(v)
+        if n then return math.floor(mod_gap_px * _clampGap(n) / 100) end
+    end
+    return mod_gap_px
+end
+
+-- Returns integer % for SpinWidget.
+function M.getModuleGapPct(mod_id, pfx)
+    if mod_id and pfx then
+        local v = G_reader_settings:readSetting(_gapKey(mod_id, pfx))
+        local n = tonumber(v)
+        if n then return _clampGap(n) end
+    end
+    return GAP_DEF
+end
+
+-- Saves gap %.
+function M.setModuleGap(pct, mod_id, pfx)
+    if mod_id and pfx then
+        G_reader_settings:saveSetting(_gapKey(mod_id, pfx), _clampGap(pct))
+    end
+end
+
+-- Menu-item factory for the gap SpinWidget, matching makeScaleItem's pattern.
+function M.makeGapItem(opts)
+    return {
+        text_func      = opts.text_func,
+        separator      = opts.separator or nil,
+        keep_menu_open = true,
+        callback       = function()
+            local SpinWidget = require("ui/widget/spinwidget")
+            local UIManager  = require("ui/uimanager")
+            UIManager:show(SpinWidget:new{
+                title_text    = opts.title,
+                info_text     = opts.info,
+                value         = opts.get(),
+                value_min     = GAP_MIN,
+                value_max     = GAP_MAX,
+                value_step    = GAP_STEP,
+                unit          = "%",
+                ok_text       = _("Apply"),
+                cancel_text   = _("Cancel"),
+                default_value = GAP_DEF,
                 callback      = function(spin)
                     opts.set(spin.value)
                     opts.refresh()
