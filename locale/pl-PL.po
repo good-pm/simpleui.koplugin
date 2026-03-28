@@ -1,0 +1,1049 @@
+# Simple UI — KOReader plugin
+# Translation template
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: simpleui\n"
+"POT-Creation-Date: 2026-03-27 12:00+0000\n"
+"PO-Revision-Date:\n"
+"Last-Translator:\n"
+"Language-Team:\n"
+"Language: pl_PL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.9\n"
+
+#: sui_menu.lua:320
+msgid "    Size"
+msgstr "   Rozmiar"
+
+#: desktop_modules/module_reading_goals.lua:602
+msgid "  Physical Books  (%d in %s)"
+msgstr "  Fizyczne Książki  (%d w %s)"
+
+#: desktop_modules/module_reading_goals.lua:595
+msgid "  Set Goal  (%d books in %s)"
+msgstr "  Ustaw Cel  (%d książek w %s)"
+
+#: desktop_modules/module_reading_goals.lua:617
+msgid "  Set Goal  (%d min/day)"
+msgstr "  Ustaw Cel  (%d minut/dzień)"
+
+#: desktop_modules/module_reading_goals.lua:596
+msgid "  Set Goal  (%s)"
+msgstr "  Ustaw Cel (%s)"
+
+#: desktop_modules/module_reading_goals.lua:616
+msgid "  Set Goal  (disabled)"
+msgstr "  Ustaw Cel (wyłączony)"
+
+#: desktop_modules/module_reading_goals.lua:429
+msgid "%d books"
+msgstr "%d książek"
+
+#: desktop_modules/module_currently.lua:336
+msgid "%d days of reading"
+msgstr "%d dni czytania"
+
+#: desktop_modules/module_recent.lua:123
+msgid "%d%%"
+msgstr "%d%%"
+
+#: desktop_modules/module_currently.lua:309
+#: desktop_modules/module_new_books.lua:141
+#: desktop_modules/module_recent.lua:157
+msgid "%d%% Read"
+msgstr "%d%% Przeczytane"
+
+#: desktop_modules/module_reading_goals.lua:428
+msgid "%d/%d books"
+msgstr "%d/%d książek"
+
+#: desktop_modules/module_currently.lua:347
+#: desktop_modules/module_reading_goals.lua:445
+msgid "%s read"
+msgstr "Przeczytano %s"
+
+#: desktop_modules/module_currently.lua:370
+msgid "%s remaining"
+msgstr "Pozostało %s"
+
+#: desktop_modules/module_currently.lua:335
+msgid "1 day of reading"
+msgstr "1 dzień czytania"
+
+#: sui_menu.lua:1122
+msgid "Add at least 2 actions to arrange."
+msgstr "Dodaj minimum 2 akcje, aby zmienić kolejność."
+
+#: desktop_modules/module_reading_stats.lua:546
+msgid "Add at least 2 stats to arrange."
+msgstr "Dodaj minimum 2 statystyki, aby zmienić kolejność."
+
+#: desktop_modules/module_reading_stats.lua:67
+msgid "All time — Books"
+msgstr "Łącznie — Książki"
+
+#: desktop_modules/module_reading_stats.lua:66
+msgid "All time — Time"
+msgstr "Łączny czas"
+
+#: desktop_modules/module_reading_goals.lua:585
+msgid "Annual Goal"
+msgstr "Cel roczny"
+
+#: sui_menu.lua:1024 desktop_modules/module_reading_goals.lua:362
+msgid "Annual Reading Goal"
+msgstr "Roczny cel czytania"
+
+#: sui_config.lua:1562 sui_config.lua:1643 sui_menu.lua:593 sui_menu.lua:651
+#: sui_menu.lua:1364 sui_menu.lua:1399
+msgid "Apply"
+msgstr "Zastosuj"
+
+#: desktop_modules/module_clock.lua:49
+msgid "April"
+msgstr "Kwiecień"
+
+#: sui_menu.lua:1120 desktop_modules/module_reading_stats.lua:543
+msgid "Arrange"
+msgstr "Zmień kolejność"
+
+#: sui_menu.lua:1126
+msgid "Arrange %s"
+msgstr "Zmień kolejność %s"
+
+#: sui_menu.lua:840 sui_menu.lua:891 sui_menu.lua:906
+msgid "Arrange Buttons"
+msgstr "Zmień kolejność przycisków"
+
+#: desktop_modules/module_collections.lua:535
+#: desktop_modules/module_collections.lua:548
+msgid "Arrange Collections"
+msgstr "Zmień kolejność kolekcji"
+
+#: sui_menu.lua:483 sui_menu.lua:511
+msgid "Arrange Items"
+msgstr "Zmień kolejność ikon"
+
+#: sui_menu.lua:1280 sui_menu.lua:1296
+msgid "Arrange Modules"
+msgstr "Zmień kolejność modułów"
+
+#: desktop_modules/module_reading_stats.lua:552
+msgid "Arrange Reading Stats"
+msgstr "Zmień kolejność statystyk"
+
+#: sui_menu.lua:193 sui_menu.lua:203
+msgid "Arrange tabs"
+msgstr "Zmień kolejność zakładek"
+
+#: desktop_modules/module_clock.lua:50
+msgid "August"
+msgstr "Sierpień"
+
+#: sui_foldercovers.lua:405 desktop_modules/module_collections.lua:497
+msgid "Auto (first book)"
+msgstr "Auto (pierwsza książka)"
+
+#: sui_titlebar.lua:54
+msgid "Back"
+msgstr "Powrót"
+
+#: desktop_modules/module_collections.lua:575
+msgid "Badge position: Bottom"
+msgstr "Pozycja odznaki: Dół"
+
+#: desktop_modules/module_collections.lua:576
+msgid "Badge position: Top"
+msgstr "Pozycja odznaki: Góra"
+
+#: sui_config.lua:143
+msgid "Battery"
+msgstr "Bateria"
+
+#: sui_quickactions.lua:404
+msgid "Book Info"
+msgstr "Informacje o książce"
+
+#: sui_bottombar.lua:886
+msgid "Bookmark browser"
+msgstr "Przeglądarka zakładek"
+
+#: sui_bottombar.lua:859
+msgid "Bookmark browser not available."
+msgstr "Przeglądarka zakładek niedostępna."
+
+#: sui_config.lua:118
+msgid "Bookmarks"
+msgstr "Zakładki"
+
+#: desktop_modules/module_reading_goals.lua:363
+msgid "Books to read in %s:"
+msgstr "Książki do przeczytania w %s:"
+
+#: sui_menu.lua:1545 sui_menu.lua:1624 sui_menu.lua:1680
+msgid "Bottom"
+msgstr "Dół"
+
+#: sui_bottombar.lua:736 sui_menu.lua:618
+msgid "Bottom Bar"
+msgstr "Dolny pasek"
+
+#: sui_menu.lua:644
+msgid "Bottom Bar Size"
+msgstr "Rozmiar dolnego paska"
+
+#: sui_menu.lua
+msgid ""
+"A restart is required to apply the new bar size across all layouts.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Należy zrestartować w celu zastosowania nowego rozmiaru paska.\n"
+"\n"
+"Zrestartować teraz?"
+
+#: sui_menu.lua:626
+msgid ""
+"Bottom Bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Dolny pasek będzie %s po zrestartowaniu.\n"
+"\n"
+"Zrestartować teraz?"
+
+#: sui_menu.lua:668 sui_menu.lua:671
+msgid "Bottom Margin"
+msgstr "Dolny margines"
+
+#: sui_menu.lua:669
+msgid "Bottom Margin — %d%%"
+msgstr "Dolny margines — %d%%"
+
+#: sui_homescreen.lua:701
+msgid "Top Margin  (%d%%)"
+msgstr "Górny margines (%d%%)"
+
+#: sui_homescreen.lua:704
+msgid ""
+"Vertical space above this module.\n"
+"100% is the default spacing."
+msgstr ""
+"Przestrzeń pionowa nad tym modułem.\n"
+"100% to domyślny odstęp."
+
+#: sui_config.lua:120 sui_config.lua:142
+msgid "Brightness"
+msgstr "Jasność"
+
+#: sui_menu.lua:956
+msgid "Button Size"
+msgstr "Wielkość przycisku"
+
+#: sui_bottombar.lua:911 sui_bottombar.lua:1428 sui_config.lua:1563
+#: sui_config.lua:1644 sui_foldercovers.lua:431 sui_menu.lua:594
+#: sui_menu.lua:652 sui_menu.lua:1365 sui_menu.lua:1400
+#: sui_quickactions.lua:188 sui_quickactions.lua:279 sui_quickactions.lua:387
+#: sui_quickactions.lua:565 sui_quickactions.lua:636 sui_quickactions.lua:664
+#: sui_quickactions.lua:692 sui_quickactions.lua:708 sui_quickactions.lua:820
+#: sui_quickactions.lua:961 desktop_modules/module_collections.lua:523
+#: desktop_modules/module_quote.lua:892
+#: desktop_modules/module_reading_goals.lua:366
+#: desktop_modules/module_reading_goals.lua:383
+#: desktop_modules/module_reading_goals.lua:401
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: desktop_modules/module_reading_stats.lua:494
+msgid "Cards"
+msgstr "Karty"
+
+#: sui_menu.lua:498 sui_menu.lua:1672
+msgid "Center"
+msgstr "Środek"
+
+#: sui_quickactions.lua:869
+msgid "Change Icons"
+msgstr "Zmień Ikony"
+
+#: sui_config.lua:140 desktop_modules/module_clock.lua:211
+msgid "Clock"
+msgstr "Zegar"
+
+#: sui_titlebar.lua:59
+msgid "Close"
+msgstr "Zamknij"
+
+#: sui_quickactions.lua:312
+msgid "Codepoint out of valid Unicode range (0–10FFFF)."
+msgstr "Codepoint poza poprawnym zakresem Unicode (0–10FFFF)."
+
+#: sui_quickactions.lua:702
+msgid "Collection"
+msgstr "Kolekcje"
+
+#: desktop_modules/module_collections.lua:484
+#: desktop_modules/module_collections.lua:490
+msgid "Collection is empty."
+msgstr "Kolekcja jest pusta."
+
+#: sui_quickactions.lua:1029
+msgid "Collection not available: %s"
+msgstr "Kolekcja niedostępna: %s"
+
+#: sui_bottombar.lua:897 sui_config.lua:114 sui_quickactions.lua:406
+#: desktop_modules/module_collections.lua:290
+#: desktop_modules/module_collections.lua:291
+msgid "Collections"
+msgstr "Kolekcje"
+
+#: sui_bottombar.lua:1121
+msgid "Collections not available."
+msgstr "Kolekcja niedostępna."
+
+#: sui_menu.lua:960 desktop_modules/module_reading_goals.lua:573
+msgid "Compact"
+msgstr "Kompaktowy"
+
+#: sui_quickactions.lua:197
+msgid "Confirm"
+msgstr "Potwierdź"
+
+#: sui_config.lua:116
+msgid "Continue"
+msgstr "Kontynuuj"
+
+#: desktop_modules/module_collections.lua:527
+msgid "Cover for \"%s\""
+msgstr "Okładka dla \"%s\""
+
+#: desktop_modules/module_collections.lua:564
+#: desktop_modules/module_collections.lua:566
+#: desktop_modules/module_currently.lua:447
+#: desktop_modules/module_currently.lua:449
+#: desktop_modules/module_new_books.lua:218
+#: desktop_modules/module_new_books.lua:220
+#: desktop_modules/module_recent.lua:239 desktop_modules/module_recent.lua:241
+msgid "Cover size"
+msgstr "Rozmiar okładki"
+
+#: sui_quickactions.lua:878
+msgid "Create Quick Action"
+msgstr "Stwórz Szybką Akcję"
+
+#: desktop_modules/module_currently.lua:232
+#: desktop_modules/module_currently.lua:233
+msgid "Currently Reading"
+msgstr "Teraz czytane"
+
+#: sui_config.lua:637
+msgid "Custom"
+msgstr "Niestandardowy"
+
+#: sui_menu.lua:933
+msgid "Custom Title Bar"
+msgstr "Niestandardowy pasek tytułu"
+
+#: sui_menu.lua:944
+msgid ""
+"Custom Title Bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Niestandardowy pasek tytułu będzie %s po zrestartowaniu.\n"
+"\n"
+"Zrestartować teraz?"
+
+#: desktop_modules/module_reading_goals.lua:606
+msgid "Daily Goal"
+msgstr "Dzienny cel"
+
+#: desktop_modules/module_reading_goals.lua:398
+msgid "Daily Reading Goal"
+msgstr "Cel dziennego czytania"
+
+#: desktop_modules/module_reading_stats.lua:65
+msgid "Daily avg — Pages"
+msgstr "Średnia dzienna — Strony"
+
+#: desktop_modules/module_reading_stats.lua:64
+msgid "Daily avg — Time"
+msgstr "Średnia dzienna — Czas"
+
+#: desktop_modules/module_clock.lua:51
+msgid "December"
+msgstr "Grudzień"
+
+#: sui_menu.lua:297 sui_menu.lua:326 sui_menu.lua:961 sui_quickactions.lua:347
+#: desktop_modules/module_quick_actions.lua:266
+#: desktop_modules/module_quick_actions.lua:271
+#: desktop_modules/module_reading_goals.lua:565
+msgid "Default"
+msgstr "Domyślne"
+
+#: sui_quickactions.lua:610 sui_quickactions.lua:629
+msgid "Default (Folder)"
+msgstr "Domyślne (Folder)"
+
+#: sui_quickactions.lua:656
+msgid "Default (Plugin)"
+msgstr "Domyślne (Wtyczka)"
+
+#: sui_quickactions.lua:684
+msgid "Default (System)"
+msgstr "Domyślne (System)"
+
+#: desktop_modules/module_quote.lua:976
+msgid "Default Quotes"
+msgstr "Domyślne cytaty"
+
+#: sui_quickactions.lua:955 sui_quickactions.lua:960
+msgid "Delete"
+msgstr "Usuń"
+
+#: sui_quickactions.lua:959
+msgid "Delete quick action \"%s\"?"
+msgstr "Usunąć szybką akcję \"%s\"?"
+
+#: sui_quickactions.lua:409
+msgid "Dictionary Lookup"
+msgstr "Wyszukiwanie w słowniku"
+
+#: sui_menu.lua:1025
+msgid "Digital Goal  (%s)"
+msgstr "Cel cyfrowy (%s)"
+
+#: sui_menu.lua:1025
+msgid "Digital: %d books in %s"
+msgstr "Cyfrowe: %d książek w %s"
+
+#: sui_menu.lua:1384
+msgid "Disable \"Lock Scale\" first to set a custom label scale."
+msgstr "Wyłącz blokadę skali, aby ustawić niestandardowy rozmiar etykiety."
+
+#: sui_config.lua:1547
+msgid "Disable \"Lock Scale\" first to set a per-module scale."
+msgstr "Wyłącz blokadę skali, aby ustawić skalę na moduł."
+
+#: sui_config.lua:144
+msgid "Disk Usage"
+msgstr "Użycie pamięci"
+
+#: sui_quickactions.lua:1014
+msgid "Dispatcher not available."
+msgstr "Dyspozytor niedostępny."
+
+#: sui_quickactions.lua:945
+msgid "Edit"
+msgstr "Edytuj"
+
+#: sui_quickactions.lua:511
+msgid "Edit Quick Action"
+msgstr "Edytuj Szybką Akcję"
+
+#: sui_menu.lua:1292
+msgid "Enable at least 2 modules to arrange."
+msgstr "Włącz minimum 2 moduły aby zmienić kolejność."
+
+#: sui_quickactions.lua:271
+msgid ""
+"Enter the Unicode codepoint (hex) of a Nerd Fonts symbol.\n"
+"You can look up codes with wakamaifondue.com using the file:\n"
+"  /koreader/fonts/nerdfonts/symbols.ttf\n"
+"Leave blank and press OK to remove a Nerd Font icon."
+msgstr ""
+"Wprowadź kod Unicode (szesnastkowy) symbolu czcionki Nerd Fonts.\n"
+"Możesz wyszukać kody na stronie wakamaifondue.com, korzystając z pliku:\n"
+"/koreader/fonts/nerdfonts/symbols.ttf\n"
+"Pozostaw puste pole i naciśnij OK, aby usunąć ikonę czcionki Nerd Font."
+
+#: sui_menu.lua:324
+msgid "Extra Small"
+msgstr "Bardzo mały"
+
+#: sui_config.lua:117 sui_quickactions.lua:405
+msgid "Favorites"
+msgstr "Ulubione"
+
+#: sui_bottombar.lua:1149
+msgid "Favorites not available."
+msgstr "Ulubione niedostępne."
+
+#: desktop_modules/module_clock.lua:49
+msgid "February"
+msgstr "Luty"
+
+#: sui_bottombar.lua:867
+msgid "Fetching bookmarks\\xe2\\x80\\xa6"
+msgstr "Wczytywanie zakładek\\xe2\\x80\\xa6"
+
+#: sui_quickactions.lua:407
+msgid "File Search"
+msgstr "Wyszukiwarka plików"
+
+#: desktop_modules/module_quick_actions.lua:266
+#: desktop_modules/module_quick_actions.lua:280
+#: desktop_modules/module_reading_stats.lua:504
+msgid "Flat"
+msgstr "Płaski"
+
+#: sui_quickactions.lua:700
+msgid "Folder"
+msgstr "Folder"
+
+#: sui_menu.lua:1578
+msgid "Folder Covers"
+msgstr "Okładki Folderów"
+
+#: sui_menu.lua:1640
+msgid "Folder Name"
+msgstr "Nazwa Folderu"
+
+#: sui_quickactions.lua:408
+msgid "Folder Shortcuts"
+msgstr "Skróty do folderów"
+
+#: sui_foldercovers.lua:436
+msgid "Folder cover"
+msgstr "Okładka Folderu"
+
+#: desktop_modules/module_clock.lua:46
+msgid "Friday"
+msgstr "Piątek"
+
+#: sui_bottombar.lua:1253
+msgid "Frontlight not available on this device."
+msgstr "Podświetlenie jest niedostępne na tym urządzeniu."
+
+#: sui_menu.lua:1358
+msgid ""
+"Global scale for all modules.\n"
+"Individual overrides in Module Settings take precedence.\n"
+"100% is the default size."
+msgstr ""
+"Skala globalna dla wszystkich modułów.\n"
+"Poszczególne nadpisania w Ustawieniach modułu mają pierwszeństwo.\n"
+"Domyślny rozmiar to 100%."
+
+#: sui_menu.lua:645
+msgid ""
+"Height of the bottom navigation bar.\n"
+"100% is the default size."
+msgstr ""
+"Wysokość dolnego paska nawigacyjnego.\n"
+"Domyślny rozmiar to 100%."
+
+#: sui_menu.lua:587
+msgid ""
+"Height of the top status bar.\n"
+"100% is the default size."
+msgstr ""
+"Wysokość górnego paska stanu.\n"
+"Domyślny rozmiar to 100%."
+
+#: sui_menu.lua:728 sui_menu.lua:1605 sui_menu.lua:1643
+msgid "Hidden"
+msgstr "Ukryty"
+
+#: sui_menu.lua:1132
+msgid "Hide Text"
+msgstr "Ukryj tekst"
+
+#: sui_menu.lua:1702
+msgid "Hide selection underline"
+msgstr "Ukryj podkreślenie zaznaczenia"
+
+#: sui_bottombar.lua:890 sui_config.lua:115 sui_quickactions.lua:403
+msgid "History"
+msgstr "Historia"
+
+#: sui_bottombar.lua:1125
+msgid "History not available."
+msgstr "Historia niedostępna."
+
+#: sui_config.lua:113
+msgid "Home"
+msgstr "Dom"
+
+#: sui_menu.lua:1449 sui_menu.lua:1543 sui_patches.lua:289 sui_patches.lua:293
+#: sui_patches.lua:306
+msgid "Home Screen"
+msgstr "Ekran główny"
+
+#: sui_bottombar.lua:907
+msgid "Home folder"
+msgstr "Folder domowy"
+
+#: sui_bottombar.lua:909
+msgid "Home folder + subfolders"
+msgstr "Folder domowy + podfoldery"
+
+#: sui_homescreen.lua:446
+msgid "Homescreen"
+msgstr "Ekran główny"
+
+#: sui_bottombar.lua:1144
+msgid "Homescreen not available."
+msgstr "Ekran główny niedostępny."
+
+#: sui_quickactions.lua:520 sui_quickactions.lua:524
+msgid "Icon"
+msgstr "Ikona"
+
+#: sui_menu.lua:690 sui_menu.lua:693
+msgid "Icon Size"
+msgstr "Rozmiar ikony"
+
+#: sui_menu.lua:691
+msgid "Icon Size — %d%%"
+msgstr "Rozmiar ikony — %d%%"
+
+#: sui_quickactions.lua:515
+msgid "Icon: Default"
+msgstr "Ikona: Domyślna"
+
+#: sui_menu.lua:101
+msgid "Icons"
+msgstr "Ikony"
+
+#: sui_menu.lua:102
+msgid "Icons only"
+msgstr "Tylko ikony"
+
+#: sui_menu.lua:853
+msgid ""
+"Invalid arrangement.\n"
+"Keep items between the Left and Right separators."
+msgstr ""
+"Nieprawidłowy układ.\n"
+"Zachowaj elementy pomiędzy Prawym a Lewym separatorem."
+
+#: sui_menu.lua:525
+msgid ""
+"Invalid arrangement.\n"
+"Keep the Left, Center and Right separators in order."
+msgstr ""
+"Nieprawidłowy układ.\n"
+"Zachowaj kolejność separatorów: lewy, środkowy i prawy."
+
+#: sui_quickactions.lua:318
+msgid "Invalid input. Please enter 1–6 hexadecimal digits (0–9, A–F)."
+msgstr "Nieprawidłowe dane wejściowe. Proszę wprowadzić 1–6 cyfr szesnastkowych (0–9, A–F)."
+
+#: desktop_modules/module_currently.lua:671 sui_menu.lua:606
+msgid "Items"
+msgstr "Elementy"
+
+#: desktop_modules/module_clock.lua:49
+msgid "January"
+msgstr "Styczeń"
+
+#: desktop_modules/module_clock.lua:50
+msgid "July"
+msgstr "Lipiec"
+
+#: desktop_modules/module_clock.lua:50
+msgid "June"
+msgstr "Czerwiec"
+
+#: sui_menu.lua:1392
+msgid "Label Scale"
+msgstr "Skala etykiety"
+
+#: sui_menu.lua:710 sui_menu.lua:713
+msgid "Label Size"
+msgstr "Rozmiar etykiety"
+
+#: sui_menu.lua:711
+msgid "Label Size — %d%%"
+msgstr "Rozmiar etykiety — %d%%"
+
+#: sui_menu.lua:1377
+msgid "Labels"
+msgstr "Etykiety"
+
+#: sui_menu.lua:962
+msgid "Large"
+msgstr "Duża"
+
+#: sui_menu.lua:310 sui_menu.lua:340 sui_menu.lua:398 sui_menu.lua:570
+#: sui_menu.lua:627 sui_menu.lua:948 sui_menu.lua:1524
+msgid "Later"
+msgstr "Potem"
+
+#: sui_menu.lua:492 sui_menu.lua:823
+msgid "Left"
+msgstr "Lewo"
+
+#: sui_config.lua:112 sui_config.lua:485 sui_menu.lua:1564 sui_titlebar.lua:568
+msgid "Library"
+msgstr "Biblioteka"
+
+#: sui_menu.lua:966
+msgid "Library Buttons"
+msgstr "Przyciski Biblioteki"
+
+#: desktop_modules/module_reading_stats.lua:514
+msgid "List"
+msgstr "Lista"
+
+#: sui_menu.lua:1338
+msgid "Lock Scale"
+msgstr "Zablokuj skalę"
+
+#: desktop_modules/module_clock.lua:49
+msgid "March"
+msgstr "Marzec"
+
+#: sui_menu.lua:1095
+msgid "Maximum %d actions per module reached. Remove one first."
+msgstr "Osiągnięto maksymalną liczbę akcji na moduł: %d. Najpierw usuń jedną."
+
+#: sui_menu.lua:1152
+msgid "Maximum %d modules active. Disable one first."
+msgstr "Maksymalnie %d aktywnych modułów. Wyłącz najpierw jeden."
+
+#: sui_quickactions.lua:883
+msgid "Maximum %d quick actions reached. Delete one first."
+msgstr "Osiągnięto maksymalną liczbę szybkich akcji: %d. Usuń najpierw jedną."
+
+#: desktop_modules/module_reading_stats.lua:481
+msgid "Maximum %d stats per row. Remove one first."
+msgstr "Maksymalna liczba statystyk na wiersz: %d. Najpierw usuń jedną."
+
+#: sui_menu.lua:270
+msgid "Maximum %d tabs reached. Remove one first."
+msgstr "Osiągnięto maksymalną liczbę kart: %d. Usuń najpierw jedną."
+
+#: desktop_modules/module_collections.lua:616
+msgid "Maximum 5 collections. Remove one first."
+msgstr "Maksymalnie 5 kolekcji. Najpierw usuń jedną."
+
+#: desktop_modules/module_clock.lua:50
+msgid "May"
+msgstr "Maj"
+
+#: sui_titlebar.lua:53 sui_titlebar.lua:58
+msgid "Menu"
+msgstr "Menu"
+
+#: sui_menu.lua:260
+msgid "Minimum 1 tab required in navpager mode."
+msgstr "Minimum 1 zakładka jest wymagana dla trybu navpager."
+
+#: sui_menu.lua:261
+msgid "Minimum 2 tabs required. Select another tab first."
+msgstr "Wymagane minimum 2 zakładki. Najpierw wybierz inną."
+
+#: desktop_modules/module_reading_goals.lua:399
+msgid "Minutes per day:"
+msgstr "Minuty na dzień:"
+
+#: sui_menu.lua:1355
+msgid "Module Scale"
+msgstr "Skala Modułu"
+
+#: sui_menu.lua:1314
+msgid "Module Settings"
+msgstr "Ustawienia Modułu"
+
+#: sui_menu.lua:1326
+msgid "Module limit disabled. Enabling too many modules may slow down the homescreen significantly and modules may be clipped at the bottom of the page."
+msgstr "Limit modułów wyłączony. Włączenie zbyt wielu modułów może znacznie spowolnić ekran główny, a moduły mogą zostać przycięte na dole strony."
+
+#: sui_menu.lua:1349
+msgid "Modules"
+msgstr "Moduły"
+
+#: sui_menu.lua:1271
+msgid "Modules  (%d — no limit)"
+msgstr "Moduły (%d — bez limitu)"
+
+#: sui_menu.lua:1275
+msgid "Modules  (%d/%d — %d left)"
+msgstr "Moduły (%d/%d — pozostało %d)"
+
+#: sui_menu.lua:1274
+msgid "Modules  (%d/%d — at limit)"
+msgstr "Moduły (%d/%d — limit osiągnięty)"
+
+#: desktop_modules/module_clock.lua:45
+msgid "Monday"
+msgstr "Poniedziałek"
+
+#: desktop_modules/module_quote.lua:996
+msgid "My Highlights"
+msgstr "Moje zaznaczenia"
+
+#: sui_quickactions.lua:609 sui_quickactions.lua:628 sui_quickactions.lua:655
+#: sui_quickactions.lua:683
+msgid "Name"
+msgstr "Nazwa"
+
+#: sui_menu.lua:1547
+msgid "Navigation Bar"
+msgstr "Pasek nawigacji"
+
+#: sui_menu.lua:375
+msgid "Navpager"
+msgstr "Nawigator"
+
+#: sui_menu.lua:397
+msgid ""
+"Navpager will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Nawigator będzie %s po zrestartowaniu.\n"
+"\n"
+"Zrestartować teraz?"
+
+#: sui_quickactions.lua:268
+msgid "Nerd Font Icon"
+msgstr "Ikona czcionki Nerd"
+
+#: sui_quickactions.lua:358
+msgid "Nerd Font symbol…"
+msgstr "Symbol Czcionki Nerd…"
+
+#: sui_bottombar.lua:1213
+msgid "Network manager unavailable."
+msgstr "Menedżer sieci niedostępny."
+
+#: desktop_modules/module_new_books.lua:139
+msgid "New"
+msgstr "Nowy"
+
+#: desktop_modules/module_new_books.lua:46
+#: desktop_modules/module_new_books.lua:47
+msgid "New Books"
+msgstr "Nowe Książki"
+
+#: sui_quickactions.lua:511
+msgid "New Quick Action"
+msgstr "Nowa Szybka Akcja"
+
+#: sui_quickactions.lua:817
+msgid "New name…"
+msgstr "Nowa nazwa…"
+
+#: sui_bottombar.lua:245
+msgid "Next"
+msgstr "Następny"
+
+#: sui_menu.lua:1318
+msgid "No Module Limit  ⚠ not recommended"
+msgstr "Bez limitu modułów ⚠ nie zalecane"
+
+#: sui_bottombar.lua:1171
+msgid "No book in history."
+msgstr "Brak książek w historii."
+
+#: sui_foldercovers.lua:394
+msgid "No books found in this folder."
+msgstr "Nie znaleziono żadnych książek w tym folderze."
+
+#: sui_homescreen.lua:116
+msgid "No books opened yet"
+msgstr "Nie otwarto jeszcze żadnej książki"
+
+#: desktop_modules/module_collections.lua:586
+msgid "No collections found."
+msgstr "Nie znaleziono kolekcji."
+
+#: desktop_modules/module_collections.lua:322
+msgid "No collections selected"
+msgstr "Nie wybrano żadnej kolekcji"
+
+#: sui_quickactions.lua:1036
+msgid ""
+"No folder, collection or plugin configured.\n"
+"Go to Simple UI \\xe2\\x86\\x92 Settings \\xe2\\x86\\x92 Quick Actions to set one."
+msgstr ""
+"Nie skonfigurowano folderu, kolekcji ani wtyczki.\n"
+"Przejdź do \"Simple UI \\xe2\\x86\\x92 Settings \\xe2\\x86\\x92 Quick Actions\", aby je ustawić."
+
+#: desktop_modules/module_quote.lua:699
+msgid "No highlights found. Open a book and highlight some passages."
+msgstr "Nie znaleziono żadnych zaznaczeń. Otwórz książkę i zaznacz trochę tekstu."
+
+#: sui_quickactions.lua:371
+msgid "No icons found in:"
+msgstr "Nie znaleziono ikon w:"
+
+#: sui_quickactions.lua:645
+msgid "No plugins found."
+msgstr "Nie znaleziono wtyczek."
+
+#: desktop_modules/module_quote.lua:665
+msgid "No quotes found."
+msgstr "Nie znaleziono cytatów."
+
+#: desktop_modules/module_reading_stats.lua:367
+msgid "No stats selected"
+msgstr "Nie wybrano statystyk"
+
+#: sui_quickactions.lua:673
+msgid "No system actions found."
+msgstr "Nie znaleziono żadnych systemowych akcji."
+
+#: desktop_modules/module_clock.lua:51
+msgid "November"
+msgstr "Listopad"
+
+#: sui_menu.lua:1602
+msgid "Number of Books in Folder"
+msgstr "Liczba książek w folderze"
+
+#: sui_menu.lua:1634
+msgid "Number of Pages"
+msgstr "Liczba stron"
+
+#: sui_quickactions.lua:286
+msgid "OK"
+msgstr "OK"
+
+#: desktop_modules/module_clock.lua:51
+msgid "October"
+msgstr "Październik"
+
+#: sui_menu.lua:296 sui_menu.lua:356 sui_menu.lua:374 sui_menu.lua:561
+#: sui_menu.lua:618 sui_menu.lua:787 sui_menu.lua:933 sui_menu.lua:1449
+#: sui_menu.lua:1506 desktop_modules/module_clock.lua:378
+#: desktop_modules/module_clock.lua:386
+msgid "Off"
+msgstr "Wyłącz"
+
+#: sui_menu.lua:296 sui_menu.lua:356 sui_menu.lua:374 sui_menu.lua:561
+#: sui_menu.lua:618 sui_menu.lua:787 sui_menu.lua:933 sui_menu.lua:1449
+#: sui_menu.lua:1506 desktop_modules/module_clock.lua:378
+#: desktop_modules/module_clock.lua:386
+msgid "On"
+msgstr "Włącz"
+
+#: desktop_modules/module_quote.lua:891
+msgid "Open"
+msgstr "Otwórz"
+
+#: sui_homescreen.lua:125
+msgid "Open a book to get started"
+msgstr "Otwórz książkę, aby rozpocząć"
+
+#: sui_menu.lua:1598
+msgid "Overlays"
+msgstr "Nakładki"
+
+#: sui_patches.lua:1125 sui_patches.lua:1239
+msgid "Page %1 of %2"
+msgstr "Strona %1 z %2"
+
+#: sui_menu.lua:356
+msgid "Page number in title bar"
+msgstr "Numer strony w pasku tytułu"
+
+#: sui_menu.lua:1548
+msgid "Pagination Bar"
+msgstr "Pasek paginacji"
+
+#: sui_menu.lua:339
+msgid ""
+"Pagination bar size will change after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Rozmiar paska paginacji zmieni się po ponownym uruchomieniu.\n"
+"\n"
+"Uruchomić ponownie teraz?"
+
+#: sui_menu.lua:309
+msgid ""
+"Pagination bar will be %s after restart.\n"
+"\n"
+"Restart now?"
+msgstr ""
+"Pasek paginacji będzie wynosił %s po zrestartowaniu.\n"
+"\n"
+"Zrestartować teraz?"
+
+#: sui_titlebar.lua:57
+msgid "Path"
+msgstr "Ścieżka"
+
+#: sui_quickactions.lua:592
+msgid "Path chooser not available."
+msgstr "Wybieracz ścieżki niedostępny."
+
+#: desktop_modules/module_recent.lua:286
+msgid "Percentage overlay on cover"
+msgstr "Nakładka procentowa na okładce"
+
+#: desktop_modules/module_currently.lua:524
+msgid "Percentage read"
+msgstr "Przeczytano (procent)"
+
+#: desktop_modules/module_recent.lua:276
+msgid "Percentage text"
+msgstr "Wartość procentowa (tekst)"
+
+#: desktop_modules/module_reading_goals.lua:380
+msgid "Physical Books — %s"
+msgstr "Fizyczne książki — %s"
+
+#: desktop_modules/module_reading_goals.lua:381
+msgid "Physical books read this year:"
+msgstr "Fizyczne książki przeczytane w tym roku:"
+
+#: sui_menu.lua:1031
+msgid "Physical: %d books in %s"
+msgstr "Fizyczne: %d książek w %s"
+
+#: sui_quickactions.lua:704
+msgid "Plugin"
+msgstr "Wtyczka"
+
+#: sui_quickactions.lua:1021
+msgid "Plugin error: %s"
+msgstr "Błąd wtyczki: %s"
+
+#: sui_quickactions.lua:1023
+msgid "Plugin not available: %s"
+msgstr "Wtyczka niedostępna: %s"
+
+#: sui_config.lua:122
+msgid "Power"
+msgstr "Zasilanie"
+
+#: sui_bottombar.lua:245
+msgid "Prev"
+msgstr "Poprzedni"
+
+#: desktop_modules/module_recent.lua:266
+msgid "Progress bar"
+msgstr "Pasek postępu"
+
+#: desktop_modules/module_currently.lua:499
+msgid "Progress bar style"
+msgstr "Styl paska postępu"
+
+#: sui_menu.lua:1248 sui_menu.lua:1555
+msgid "Quick Actions"
+msgstr "Szybkie Akcje"
+
+#: sui_menu.lua:1559
+msgid "Quick Actions  (%d/%d — %d left)"
+msgstr "Szybkie Akcje (%d/%d — pozostało %d)"
+
+#: sui_menu.lua:1557
+msgid "Quick Actions  (%d/%d — at limit)"
+msgstr "Szybkie Akcje (%d/%d  — osiągnięto limit)"
+
+#: sui_menu.lua:1084 desktop_modules/module_quick_actions.lua:197
+msgid "Quick Actions %d"
+msgstr "Szybkie Akcje %d"
+
+#: sui_bottombar.lua:1420
+msgid "Quit"
+msgstr "Wyjdź"
