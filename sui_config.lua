@@ -94,8 +94,8 @@ M.ICON = {
 
     -- KOReader built-in icons
     ko_star        = _KO .. "star.empty.svg",
-    ko_wifi_on     = _KO .. "wifi.open.100.svg",
-    ko_wifi_off    = _KO .. "wifi.open.0.svg",
+    ko_wifi_on     = _P .. "custom/wifi-on.svg",
+    ko_wifi_off    = _P .. "custom/wifi-off.svg",
     ko_menu        = _KO .. "appbar.menu.svg",
     ko_settings    = _KO .. "appbar.settings.svg",
     ko_search      = _KO .. "appbar.search.svg",
