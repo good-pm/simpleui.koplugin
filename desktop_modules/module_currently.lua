@@ -88,7 +88,7 @@ local TITLE_MAX_LEN = 60
 local _MAX_SEC = 120
 
 -- Per-book stats cache (md5 → { days, total_secs, avg_time }).
--- Cleared by onBookClosed() when the reading session ends.
+-- Cleared by invalidateCache(), called from main.lua:onCloseDocument.
 local _bstats_cache = {}
 
 
@@ -166,12 +166,14 @@ end
 
 
 -- Fetches reading stats for a book from SQLite (days read, total time, avg time per page).
--- Results are cached by md5; pass force_fresh=true to bypass the cache after a session ends.
+-- Results are cached by md5 for the duration of the homescreen session.
+-- Cache is cleared by invalidateCache() (called from onCloseDocument) before
+-- each post-reading rebuild, so data is always fresh when it matters.
 -- Uses shared_conn when available to avoid opening a second DB connection.
-local function fetchBookStats(md5, shared_conn, force_fresh)
+local function fetchBookStats(md5, shared_conn)
     if not md5 then return nil end
 
-    if not force_fresh and _bstats_cache[md5] then
+    if _bstats_cache[md5] then
         return _bstats_cache[md5]
     end
 
@@ -182,7 +184,9 @@ local function fetchBookStats(md5, shared_conn, force_fresh)
     local result = nil
     local ok, err = pcall(function()
         -- Single-pass CTE: resolves book id once, then one GROUP BY scan.
-        -- Replaces 3 correlated subqueries + derived table with a single pass.
+        -- ps_agg accumulates per-page totals; the outer SELECT aggregates them.
+        -- sum(page_dur) replaces a correlated subquery that caused a second
+        -- full scan of page_stat on every call.
         -- Relies on idx_simpleui_book_md5 / idx_simpleui_pagestat_book indexes
         -- created by openStatsDB() for O(log n) lookup instead of full-table scan.
         local row = conn:exec(string.format([[
@@ -199,9 +203,7 @@ local function fetchBookStats(md5, shared_conn, force_fresh)
             )
             SELECT
                 count(DISTINCT date(first_start, 'unixepoch', 'localtime')),
-                (SELECT sum(ps2.duration)
-                 FROM page_stat ps2
-                 WHERE ps2.id_book = (SELECT id FROM b)),
+                sum(page_dur),
                 count(*),
                 sum(min(page_dur, %d))
             FROM ps_agg;
@@ -286,15 +288,7 @@ M.enabled_key = "currently"
 M.default_on  = true
 
 
--- Clears the prefetch entry and stats cache for the closed book.
-function M.onBookClosed(ctx, fp)
-    if ctx and ctx.prefetched and fp then
-        ctx.prefetched[fp] = nil
-    end
-    _bstats_cache = {}
-end
-
--- Clears the stats cache (e.g. on plugin reset).
+-- Clears the stats cache (called from main.lua:onCloseDocument before rebuild).
 function M.invalidateCache()
     _bstats_cache = {}
 end
@@ -345,11 +339,10 @@ function M.build(w, ctx)
         remain   = _showElem(pfx, "book_remaining"),
     }
 
-    -- Skip the prefetch cache when returning from a reading session (ctx.fresh).
-    local prefetched_entry = (not ctx.fresh)
-        and ctx.prefetched
-        and ctx.prefetched[ctx.current_fp]
-    local bd    = SH.getBookData(ctx.current_fp, prefetched_entry, ctx.db_conn)
+    -- Use prefetched book data. After onCloseDocument, _cached_books_state is
+    -- cleared and prefetchBooks() re-reads the sidecar, so this is always fresh.
+    local prefetched_entry = ctx.prefetched and ctx.prefetched[ctx.current_fp]
+    local bd    = SH.getBookData(ctx.current_fp, prefetched_entry)
     local cover = SH.getBookCover(ctx.current_fp, D.COVER_W, D.COVER_H)
                   or SH.coverPlaceholder(bd.title, D.COVER_W, D.COVER_H)
 
@@ -362,7 +355,7 @@ function M.build(w, ctx)
     local bstats
     if show.days or show.time or show.remain then
         local book_md5 = prefetched_entry and prefetched_entry.partial_md5_checksum
-        bstats = fetchBookStats(book_md5, ctx.db_conn, ctx.fresh)
+        bstats = fetchBookStats(book_md5, ctx.db_conn)
     end
 
     local bar_style   = getBarStyle(pfx)

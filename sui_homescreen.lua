@@ -467,6 +467,7 @@ function HomescreenWidget:init()
     -- Per-instance caches — freed in onCloseWidget.
     self._vspan_pool         = {}
     self._cached_books_state = self._cached_books_state  -- preserve value passed via new{} if any
+    self._db_conn            = nil   -- shared SQLite connection, opened lazily, closed in onCloseWidget
     self._clock_timer        = nil
     self._cover_poll_timer   = nil
     -- Clock module swap state — set during _buildContent, freed in onCloseWidget.
@@ -612,18 +613,21 @@ function HomescreenWidget:_buildContent()
     local has_content   = (bs.current_fp and show_c) or (#bs.recent_fps > 0 and show_r)
     local wants_books   = show_c or show_r
 
-    -- Open one shared DB connection for the entire render cycle.
-    -- All modules that query the stats DB (currently, recent, reading_goals,
-    -- reading_stats) receive it via ctx.db_conn and must NOT close it.
-    -- It is closed once, after the build loop, when every module is done.
-    -- We open it whenever any stats-using module is enabled, not just book
-    -- modules — reading_goals and reading_stats need it too.
     local mod_rg   = Registry.get("reading_goals")
     local mod_rs   = Registry.get("reading_stats")
     local wants_db = wants_books
         or (mod_rg and Registry.isEnabled(mod_rg, PFX))
         or (mod_rs and mod_rs.isEnabled and mod_rs.isEnabled(PFX))
-    local db_conn = wants_db and Config.openStatsDB() or nil
+
+    -- Reuse the persistent DB connection for this widget's lifetime.
+    -- Opening a new connection on every render wastes ~20-50 ms on slow eMMC:
+    -- file open + lfs.attributes + index check. The connection is opened lazily
+    -- and closed in onCloseWidget(). Read consistency is fine: stats data only
+    -- changes on onCloseDocument, which invalidates caches before the next build.
+    if wants_db and not self._db_conn then
+        self._db_conn = Config.openStatsDB()
+    end
+    local db_conn = wants_db and self._db_conn or nil
 
     local self_ref = self
     local ctx = {
@@ -672,11 +676,9 @@ function HomescreenWidget:_buildContent()
     body[#body+1]   = self:_vspan(top_pad)
 
     -- Single loop: build each module and add to body immediately.
-    -- db_conn is closed AFTER this loop so modules that use ctx.db_conn
-    -- (module_currently, module_recent via getBookData) get a live connection.
-    -- _header_body_idx records where the header widget lands in the body
-    -- VerticalGroup so _clockTick can do a surgical swap without rebuilding
-    -- the full page.
+    -- ctx.db_conn is self._db_conn — kept alive across renders, closed in onCloseWidget.
+    -- _header_body_idx records where the header widget lands in the body VerticalGroup
+    -- so _clockTick can do a surgical swap without rebuilding the full page.
     -- ctx_menu for hold-to-settings wrappers — built lazily on first hold,
     -- then reused for the lifetime of this HomescreenWidget instance.
     -- Stored on self so it is freed automatically when onCloseWidget nils state.
@@ -802,8 +804,8 @@ function HomescreenWidget:_buildContent()
         end
     end
 
-    -- Close the shared DB connection now that all modules have finished building.
-    if db_conn then pcall(function() db_conn:close() end) end
+    -- db_conn is self._db_conn — do NOT close it here.
+    -- It is kept alive across renders and closed once in onCloseWidget().
 
     if empty_widget then
         body[#body+1] = empty_widget
@@ -1096,6 +1098,10 @@ function HomescreenWidget:onCloseWidget()
 
     -- Always free per-instance widget state — the widget is always destroyed,
     -- never reused, so keeping these references alive would be a memory leak.
+    if self._db_conn then
+        pcall(function() self._db_conn:close() end)
+        self._db_conn = nil
+    end
     self._vspan_pool         = nil
     self._cached_books_state = nil
     self._header_body_ref    = nil

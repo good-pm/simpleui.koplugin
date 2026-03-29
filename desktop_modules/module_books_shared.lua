@@ -282,7 +282,7 @@ function SH.invalidateSidecarCache(fp)
     end
 end
 
-function SH.getBookData(filepath, prefetched, shared_conn)
+function SH.getBookData(filepath, prefetched)
     local meta = {}
     local percent, pages, md5, stat_pages, stat_total_time = 0, nil, nil, nil, nil
 
@@ -336,24 +336,10 @@ function SH.getBookData(filepath, prefetched, shared_conn)
             end
         end
     end)
-    -- Source 2: statistics SQLite DB (covers past sessions).
-    if not avg_time and md5 and shared_conn then
-        pcall(function()
-            if not shared_conn._stmt_avg then
-                shared_conn._stmt_avg = shared_conn:prepare([[
-                    SELECT count(DISTINCT page_stat.page), sum(page_stat.duration)
-                    FROM   page_stat
-                    JOIN   book ON book.id = page_stat.id_book
-                    WHERE  book.md5 = ?;
-                ]])
-            end
-            local r  = shared_conn._stmt_avg:reset():bind(md5):step()
-            local rp = tonumber(r and r[1]) or 0
-            local tt = tonumber(r and r[2]) or 0
-            if rp > 0 and tt > 0 then avg_time = tt / rp end
-        end)
-    end
-    -- Source 3: doc settings stats (written by Statistics plugin on close).
+    -- Source 2: doc settings stats (written by Statistics plugin on close).
+    -- The capped avg_time from the stats DB is computed by fetchBookStats()
+    -- in module_currently and passed back via bstats — callers that need
+    -- the DB-backed value should use that instead of querying here again.
     if not avg_time and stat_pages and stat_pages > 0
             and stat_total_time and stat_total_time > 0 then
         avg_time = stat_total_time / stat_pages
