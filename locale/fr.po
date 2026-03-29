@@ -64,7 +64,7 @@ msgstr "%d/%d livres"
 #: desktop_modules/module_currently.lua:347
 #: desktop_modules/module_reading_goals.lua:445
 msgid "%s read"
-msgstr "%s lus"
+msgstr "%s de lecture"
 
 #: desktop_modules/module_currently.lua:370
 msgid "%s remaining"
@@ -400,20 +400,20 @@ msgstr "Décembre"
 #: desktop_modules/module_quick_actions.lua:271
 #: desktop_modules/module_reading_goals.lua:565
 msgid "Default"
-msgstr "Défaut"
+msgstr "Par défaut"
 
 #: sui_quickactions.lua:610
 #: sui_quickactions.lua:629
 msgid "Default (Folder)"
-msgstr "Défaut (Dossier)"
+msgstr "Par défaut (Dossier)"
 
 #: sui_quickactions.lua:656
 msgid "Default (Plugin)"
-msgstr "Défaut (Plugin)"
+msgstr "Par défaut (Plugin)"
 
 #: sui_quickactions.lua:684
 msgid "Default (System)"
-msgstr "Défaut (Système)"
+msgstr "Par défaut (Système)"
 
 #: desktop_modules/module_quote.lua:976
 msgid "Default Quotes"
@@ -623,11 +623,11 @@ msgstr "Icônes uniquement"
 
 #: sui_menu.lua:853
 msgid "Invalid arrangement.\nKeep items between the Left and Right separators."
-msgstr "Organisation invalide.\nGardez les éléments entre les séparateurs Gauche et Droite."
+msgstr "Disposition invalide.\nGardez les éléments entre les séparateurs Gauche et Droite."
 
 #: sui_menu.lua:525
 msgid "Invalid arrangement.\nKeep the Left, Center and Right separators in order."
-msgstr "Organisation invalide.\nGardez les séparateurs Gauche, Centre et Droite dans l'ordre."
+msgstr "Disposition invalide.\nGardez les séparateurs Gauche, Centre et Droite dans l'ordre."
 
 #: sui_quickactions.lua:318
 msgid "Invalid input. Please enter 1–6 hexadecimal digits (0–9, A–F)."
