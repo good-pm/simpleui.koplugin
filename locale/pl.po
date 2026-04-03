@@ -4,15 +4,20 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: simpleui\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-27 12:00+0000\n"
-"PO-Revision-Date:\n"
-"Last-Translator:\n"
+"PO-Revision-Date: 2026-03-27 12:00+0000\n"
+"Last-Translator: \n"
 "Language-Team: Polish\n"
-"Language: pl_PL\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.9\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: sui_menu.lua:347
+msgid "General"
+msgstr "Ogólne"
 
 #: sui_menu.lua:320
 msgid "    Size"
@@ -301,7 +306,7 @@ msgid "Close"
 msgstr "Zamknij"
 
 #: sui_quickactions.lua:312
-msgid "Codepoint out of valid Unicode range (0â10FFFF)."
+msgid "Codepoint out of valid Unicode range (0–10FFFF)."
 msgstr "Codepoint poza poprawnym zakresem Unicode (0–10FFFF)."
 
 #: sui_quickactions.lua:702
@@ -654,7 +659,7 @@ msgstr ""
 "Zachowaj kolejność separatorów: lewy, środkowy i prawy."
 
 #: sui_quickactions.lua:318
-msgid "Invalid input. Please enter 1â6 hexadecimal digits (0â9, AâF)."
+msgid "Invalid input. Please enter 1–6 hexadecimal digits (0–9, A–F)."
 msgstr "Nieprawidłowe dane wejściowe. Proszę wprowadzić 1–6 cyfr szesnastkowych (0–9, A–F)."
 
 #: desktop_modules/module_currently.lua:671
@@ -795,6 +800,10 @@ msgid "Modules"
 msgstr "Moduły"
 
 #: sui_menu.lua:1271
+#: sui_menu.lua:1385
+msgid "Modules  (%d)"
+msgstr "Moduły  (%d)"
+
 msgid "Modules  (%d — no limit)"
 msgstr "Moduły (%d — bez limitu)"
 
@@ -934,6 +943,10 @@ msgstr "Liczba książek w folderze"
 #: sui_menu.lua:1634
 msgid "Number of Pages"
 msgstr "Liczba stron"
+
+#: sui_menu.lua:494
+msgid "Number of Pages in Title Bar Always"
+msgstr "Zawsze pokazuj liczbę stron na pasku tytułu"
 
 #: sui_quickactions.lua:286
 msgid "OK"
@@ -1576,6 +1589,10 @@ msgstr "dzień z rzędu"
 msgid "days streak"
 msgstr "dni z rzędu"
 
+#: desktop_modules/module_reading_stats.lua:68
+msgid "no streak"
+msgstr "brak serii"
+
 #: sui_quickactions.lua:769
 msgid "default"
 msgstr "domyślny"
@@ -1676,3 +1693,60 @@ msgstr "%d dni"
 #: desktop_modules/module_currently.lua
 msgid "Stats layout"
 msgstr "Układ statystyk"
+
+#: sui_menu.lua:356
+msgid "Pagination bar set to Default.\n\nRestart now?"
+msgstr "Pasek paginacji ustawiony na domyślny.\n\nZrestartować teraz?"
+
+#: sui_menu.lua:367
+msgid "Navpager enabled.\n\nRestart now?"
+msgstr "Navpager włączony.\n\nZrestartować teraz?"
+
+#: sui_menu.lua:377
+msgid "Pagination bar hidden.\n\nRestart now?"
+msgstr "Pasek paginacji ukryty.\n\nZrestartować teraz?"
+
+#: sui_menu.lua:387
+msgid "Dot Pager"
+msgstr "Pager kropkowy"
+
+#: sui_menu.lua:395
+msgid "Shows a row of dots at the bottom of the homescreen.\nThe active page dot is filled; the others are dimmed.\nAlways active when Navpager is selected."
+msgstr "Pokazuje rząd kropek na dole ekranu głównego.\nKropka aktywnej strony jest wypełniona; pozostałe są wyszarzone.\nZawsze aktywny gdy wybrany jest Navpager."
+
+#: sui_menu.lua:417
+msgid "Uses the standard KOReader pagination bar on the homescreen.\nNot available when Navpager is active."
+msgstr "Używa standardowego paska paginacji KOReader na ekranie głównym.\nNiedostępne gdy Navpager jest aktywny."
+
+#: sui_menu.lua:438
+msgid "Hides the pagination bar on the homescreen.\nNot available when Navpager is active."
+msgstr "Ukrywa pasek paginacji na ekranie głównym.\nNiedostępne gdy Navpager jest aktywny."
+
+#: sui_menu.lua:1566
+msgid "Modules per Page  (%d)"
+msgstr "Moduły na stronę  (%d)"
+
+#: sui_menu.lua:1572
+msgid "Modules per Page"
+msgstr "Moduły na stronę"
+
+#: sui_menu.lua:1573
+msgid "Maximum number of modules shown on each page.\nSwipe left/right on the Home Screen to turn pages."
+msgstr "Maksymalna liczba modułów wyświetlanych na każdej stronie.\nPrzesuń w lewo/prawo na ekranie głównym, aby przełączać strony."
+
+#: sui_menu.lua:1834
+msgid "Placeholder cover for bookless folders"
+msgstr "Okładka zastępcza dla folderów bez książek"
+
+#: sui_menu.lua:1849
+msgid "  Scan subfolders for cover"
+msgstr "  Skanuj podfoldery w poszukiwaniu okładki"
+
+#: sui_homescreen.lua:407
+#: desktop_modules/module_quote.lua:950
+msgid "Open this file?"
+msgstr "Otworzyć ten plik?"
+
+#: sui_bottombar.lua:1638
+msgid "Sleep"
+msgstr "Uśpij"
