@@ -1476,7 +1476,9 @@ function M.doWifiToggle(plugin)
 end
 
 function M.refreshWifiIcon(plugin)
-    Config.wifi_optimistic = nil
+    if not Config.wifi_broadcast_self then
+        Config.wifi_optimistic = nil
+    end
     plugin:_rebuildAllNavbars()
     plugin:_refreshCurrentView()
 end
