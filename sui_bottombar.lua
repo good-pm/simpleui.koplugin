@@ -1423,34 +1423,55 @@ function M.doWifiToggle(plugin)
         Config.wifi_optimistic = false
         pcall(function() NetworkMgr:turnOffWifi() end)
         UIManager:show(InfoMessage():new{ text = _("Wi-Fi off"), timeout = 1 })
-        -- broadcastEvent so SimpleUI (and all widgets) receive NetworkDisconnected
-        -- even when HomescreenWidget is on top (sendEvent would only reach the top widget).
-        pcall(function()
-            UIManager:broadcastEvent(require("ui/event"):new("NetworkDisconnected"))
-        end)
     else
         Config.wifi_optimistic = true
         local ok_on, err = pcall(function() NetworkMgr:turnOnWifi() end)
         if not ok_on then
             logger.warn("simpleui: Wi-Fi turn-on error:", tostring(err))
             Config.wifi_optimistic = nil
-        else
-            -- broadcastEvent so SimpleUI (and all widgets) receive NetworkConnected.
-            pcall(function()
-                UIManager:broadcastEvent(require("ui/event"):new("NetworkConnected"))
-            end)
         end
     end
 
-    -- Immediately refresh the bar and topbar with the optimistic Wi-Fi state.
+    -- Immediately refresh ALL wifi indicators with the optimistic state.
+    -- This must happen BEFORE broadcastEvent, which triggers
+    -- onNetworkConnected/Disconnected and clears wifi_optimistic.
     if plugin then
+        -- 1. Bottom bar tabs.
         plugin:_rebuildAllNavbars()
+
+        -- 2. Topbar wifi icon — call refresh() directly (synchronous) instead
+        --    of scheduleRefresh(0) which defers to the next event-loop tick,
+        --    by which time wifi_optimistic will already be nil.
         local Topbar = require("sui_topbar")
         local cfg    = Config.getTopbarConfig()
         if (cfg.side["wifi"] or "hidden") ~= "hidden" then
-            Topbar.scheduleRefresh(plugin, 0)
+            pcall(function() Topbar.refresh(plugin) end)
+        end
+
+        -- 3. Quick Actions icons and any other homescreen modules — these are
+        --    baked into ImageWidgets at build time, so a setDirty alone is not
+        --    enough. refreshImmediate rebuilds the full page synchronously.
+        local HS = package.loaded["sui_homescreen"]
+        if HS and HS._instance then
+            pcall(function() HS.refreshImmediate(false) end)
         end
     end
+
+    -- Broadcast network events so other listeners (e.g. KOReader's own network
+    -- status bar) are notified. Set a flag first so onNetworkConnected/Disconnected
+    -- knows this event came from us (optimistic state already applied) and should
+    -- rebuild the HS without resetting wifi_optimistic.
+    Config.wifi_broadcast_self = true
+    if wifi_on then
+        pcall(function()
+            UIManager:broadcastEvent(require("ui/event"):new("NetworkDisconnected"))
+        end)
+    else
+        pcall(function()
+            UIManager:broadcastEvent(require("ui/event"):new("NetworkConnected"))
+        end)
+    end
+    Config.wifi_broadcast_self = nil
 
 end
 
@@ -1674,7 +1695,7 @@ function M.showPowerDialog(plugin)
             local d = plugin._power_dialog
             plugin._power_dialog = nil
             UIManager:close(d)
-            G_reader_settings:flush()
+            UIManager:flushSettings()
             UIManager:restartKOReader()
         end }}
     end
@@ -1685,7 +1706,7 @@ function M.showPowerDialog(plugin)
             local d = plugin._power_dialog
             plugin._power_dialog = nil
             UIManager:close(d)
-            G_reader_settings:flush()
+            UIManager:flushSettings()
             UIManager:suspend()
         end }}
     end
@@ -1695,7 +1716,7 @@ function M.showPowerDialog(plugin)
         local d = plugin._power_dialog
         plugin._power_dialog = nil
         UIManager:close(d)
-        G_reader_settings:flush()
+        UIManager:flushSettings()
         UIManager:quit(0)
     end }}
 

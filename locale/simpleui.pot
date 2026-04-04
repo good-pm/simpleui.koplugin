@@ -1655,6 +1655,22 @@ msgstr ""
 msgid "  Scan subfolders for cover"
 msgstr ""
 
+#: sui_menu.lua
+msgid "Check for Updates"
+msgstr ""
+
+#: sui_menu.lua
+msgid "About"
+msgstr ""
+
+#: sui_menu.lua
+msgid "Version: %s"
+msgstr ""
+
+#: sui_menu.lua
+msgid "Author: %s"
+msgstr ""
+
 #: sui_homescreen.lua:407
 #: desktop_modules/module_quote.lua:950
 msgid "Open this file?"
@@ -1662,4 +1678,66 @@ msgstr ""
 
 #: sui_bottombar.lua:1638
 msgid "Sleep"
+msgstr ""
+
+#: sui_updater.lua:157
+msgid "Downloading Simple UI "
+msgstr ""
+
+#: sui_updater.lua:163
+msgid "Download error: "
+msgstr ""
+
+#: sui_updater.lua:174
+msgid "Extraction error: "
+msgstr ""
+
+#: sui_updater.lua:180
+msgid "Simple UI %s successfully installed.\n\nRestart KOReader to apply the update?"
+msgstr ""
+
+#: sui_updater.lua:183
+msgid "Restart"
+msgstr ""
+
+#: sui_updater.lua:184
+#: sui_updater.lua:237
+#: sui_updater.lua:258
+msgid "Cancel"
+msgstr ""
+
+#: sui_updater.lua:184
+msgid "Later"
+msgstr ""
+
+#: sui_updater.lua:194
+msgid "Checking for updates..."
+msgstr ""
+
+#: sui_updater.lua:200
+msgid "Error checking for updates: "
+msgstr ""
+
+#: sui_updater.lua:216
+msgid "Could not retrieve version information."
+msgstr ""
+
+#: sui_updater.lua:222
+msgid "Simple UI is up to date (%s)."
+msgstr ""
+
+#: sui_updater.lua:233
+msgid "Simple UI %s is available (you have %s).\n\nNo automatic update file was found.\n\nOpen the releases page on GitHub?"
+msgstr ""
+
+#: sui_updater.lua:236
+msgid "Open in browser"
+msgstr ""
+
+#: sui_updater.lua:254
+msgid "Simple UI %s is available!\nCurrent version: %s\n\nDownload and install now?"
+msgstr ""
+
+#: sui_updater.lua:257
+msgid "Download and install"
 msgstr ""

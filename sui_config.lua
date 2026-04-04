@@ -358,7 +358,8 @@ end
 -- ---------------------------------------------------------------------------
 
 -- Optimistic Wi-Fi state, updated immediately on toggle.
-M.wifi_optimistic = nil
+M.wifi_optimistic    = nil
+M.wifi_broadcast_self = nil
 
 -- Hide the Wi-Fi icon when Wi-Fi is off (instead of showing the off icon).
 function M.getWifiHideWhenOff()

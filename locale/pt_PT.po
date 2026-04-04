@@ -1661,6 +1661,22 @@ msgstr "Capa de substituição para pastas sem livros"
 msgid "  Scan subfolders for cover"
 msgstr "  Procurar capa em subpastas"
 
+#: sui_menu.lua:1869
+msgid "Check for Updates"
+msgstr "Verificar Atualizações"
+
+#: sui_menu.lua
+msgid "About"
+msgstr "Sobre"
+
+#: sui_menu.lua
+msgid "Version: %s"
+msgstr "Versão: %s"
+
+#: sui_menu.lua
+msgid "Author: %s"
+msgstr "Autor: %s"
+
 #: sui_homescreen.lua:407
 #: desktop_modules/module_quote.lua:950
 msgid "Open this file?"
@@ -1669,3 +1685,65 @@ msgstr "Abrir este ficheiro?"
 #: sui_bottombar.lua:1638
 msgid "Sleep"
 msgstr "Suspender"
+
+#: sui_updater.lua:157
+msgid "Downloading Simple UI "
+msgstr "A descarregar o Simple UI "
+
+#: sui_updater.lua:163
+msgid "Download error: "
+msgstr "Erro no download: "
+
+#: sui_updater.lua:174
+msgid "Extraction error: "
+msgstr "Erro na extração: "
+
+#: sui_updater.lua:180
+msgid "Simple UI %s successfully installed.\n\nRestart KOReader to apply the update?"
+msgstr "Simple UI %s instalado com sucesso.\n\nReiniciar o KOReader para aplicar a atualização?"
+
+#: sui_updater.lua:183
+msgid "Restart"
+msgstr "Reiniciar"
+
+#: sui_updater.lua:184
+#: sui_updater.lua:237
+#: sui_updater.lua:258
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: sui_updater.lua:184
+msgid "Later"
+msgstr "Mais tarde"
+
+#: sui_updater.lua:194
+msgid "Checking for updates..."
+msgstr "A verificar atualizações..."
+
+#: sui_updater.lua:200
+msgid "Error checking for updates: "
+msgstr "Erro ao verificar atualizações: "
+
+#: sui_updater.lua:216
+msgid "Could not retrieve version information."
+msgstr "Não foi possível obter informação da versão."
+
+#: sui_updater.lua:222
+msgid "Simple UI is up to date (%s)."
+msgstr "O Simple UI está atualizado (%s)."
+
+#: sui_updater.lua:233
+msgid "Simple UI %s is available (you have %s).\n\nNo automatic update file was found.\n\nOpen the releases page on GitHub?"
+msgstr "O Simple UI %s está disponível (tens o %s).\n\nNão foi encontrado o ficheiro de atualização automática.\n\nAbrir a página de lançamentos no GitHub?"
+
+#: sui_updater.lua:236
+msgid "Open in browser"
+msgstr "Abrir no browser"
+
+#: sui_updater.lua:254
+msgid "Simple UI %s is available!\nCurrent version: %s\n\nDownload and install now?"
+msgstr "O Simple UI %s está disponível!\nVersão atual: %s\n\nDescarregar e instalar agora?"
+
+#: sui_updater.lua:257
+msgid "Download and install"
+msgstr "Descarregar e instalar"

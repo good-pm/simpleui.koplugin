@@ -113,7 +113,7 @@ end
 local _PLUGIN_MODULES = {
     "sui_i18n", "sui_config", "sui_core", "sui_bottombar", "sui_topbar",
     "sui_patches", "sui_menu", "sui_titlebar", "sui_quickactions",
-    "sui_homescreen", "sui_foldercovers",
+    "sui_homescreen", "sui_foldercovers", "sui_updater",
     "desktop_modules/moduleregistry",
     "desktop_modules/module_books_shared",
     "desktop_modules/module_clock",
@@ -172,8 +172,14 @@ end
 function SimpleUIPlugin:onNetworkConnected()
     if self._simpleui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
-    if RUI and RUI.instance then
+    -- If this event was fired by doWifiToggle itself, wifi_optimistic is already
+    -- set correctly and the bars are already rebuilt. Skip the reset so the
+    -- optimistic icon is preserved (on Kindle isWifiOn() may lag behind).
+    -- Still call _refreshCurrentView to rebuild homescreen QA icons.
+    if not Config.wifi_broadcast_self then
         Config.wifi_optimistic = nil
+    end
+    if RUI and RUI.instance then
         self:_rebuildAllNavbars()
     else
         Bottombar.refreshWifiIcon(self)
@@ -183,8 +189,11 @@ end
 function SimpleUIPlugin:onNetworkDisconnected()
     if self._simpleui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
-    if RUI and RUI.instance then
+    -- Same rationale as onNetworkConnected above.
+    if not Config.wifi_broadcast_self then
         Config.wifi_optimistic = nil
+    end
+    if RUI and RUI.instance then
         self:_rebuildAllNavbars()
     else
         Bottombar.refreshWifiIcon(self)

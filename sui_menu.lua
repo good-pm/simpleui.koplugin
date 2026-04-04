@@ -1862,6 +1862,47 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     }
                 end,
             },
+            -- -----------------------------------------------------------------
+            -- About submenu
+            -- -----------------------------------------------------------------
+            {
+                text                = _("About"),
+                separator           = true,
+                sub_item_table_func = function()
+                    local _plugin_dir = (debug.getinfo(1, "S").source or ""):match("^@(.+)/[^/]+$")
+                    local ok, Meta = pcall(dofile, _plugin_dir .. "/_meta.lua")
+                    if not ok or type(Meta) ~= "table" then
+                        local rok, rmeta = pcall(require, "_meta")
+                        Meta = (rok and rmeta) or {}
+                    end
+                    return {
+                        {
+                            text           = string.format(_("Version: %s"), Meta.version or "?"),
+                            keep_menu_open = true,
+                            callback       = function() end,
+                        },
+                        {
+                            text           = string.format(_("Author: %s"), Meta.author or "?"),
+                            keep_menu_open = true,
+                            callback       = function() end,
+                        },
+                        {
+                            text      = _("Check for Updates"),
+                            callback  = function()
+                                local ok, Updater = pcall(require, "sui_updater")
+                                if not ok then
+                                    UIManager:show(InfoMessage():new{
+                                        text    = _("Updater module not found."),
+                                        timeout = 4,
+                                    })
+                                    return
+                                end
+                                Updater.checkForUpdates()
+                            end,
+                        },
+                    }
+                end,
+            },
         },
     }
 end -- addToMainMenu
