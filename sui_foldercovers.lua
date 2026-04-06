@@ -936,7 +936,7 @@ function M.install()
             local text = self.text
             if text:match("/$") then text = text:sub(1, -2) end
             text = text:gsub("(%S+)", function(w)
-                return w:sub(1,1):upper() .. w:sub(2):lower()
+                return w:sub(1,1):upper() .. w:sub(2)
             end)
             self._fc_display_text = BD.directory(text)
         end
