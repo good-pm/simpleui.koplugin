@@ -528,6 +528,36 @@ function M.apply(fm_self)
                     return filtered
                 end
 
+                -- onFolderUp: fires when the user taps the back button to go to
+                -- the parent folder. genItemTable is not always called when KOReader
+                -- uses a cached item table, so the back button would stay visible even
+                -- after arriving at the root. We re-evaluate the state here so it
+                -- is hidden immediately without needing a page turn.
+                local orig_onFolderUp = fc.onFolderUp
+                fm_self._titlebar_orig_fc_onFolderUp = orig_onFolderUp
+                fc.onFolderUp = function(fc_self, ...)
+                    local ok, result = pcall(orig_onFolderUp, fc_self, ...)
+                    -- Re-evaluate after the navigation completes.
+                    -- If genItemTable already ran it will have set _simpleui_has_go_up
+                    -- correctly; if not (cached items), we compute it now from the
+                    -- item_table so the button state is always up to date.
+                    local is_sub = fc_self._simpleui_has_go_up
+                    if is_sub == nil then
+                        is_sub = false
+                        for _, item in ipairs(fc_self.item_table or {}) do
+                            if item.is_go_up or (item.text and item.text:find("\u{2B06}")) then
+                                is_sub = true; break
+                            end
+                        end
+                    end
+                    if _isLockedAtHome(fc_self.path) then is_sub = false end
+                    if (fc_self.path or "") == "/" then is_sub = false end
+                    fc_self._simpleui_has_go_up = is_sub
+                    _applyBackButtonState(fc_self, is_sub, 1)
+                    if not ok then error(result) end
+                    return result
+                end
+
                 -- onGotoPage fires on every CoverBrowser page turn.
                 -- Re-entrancy guard (_simpleui_in_goto) prevents KOReader's internal
                 -- recursive onGotoPage calls (e.g. for clamping or redraw) from
@@ -713,6 +743,10 @@ function M.restore(fm_self)
         fc.genItemTable = fm_self._titlebar_orig_fc_genItemTable
     end
     fm_self._titlebar_orig_fc_genItemTable = nil
+    if fc and fm_self._titlebar_orig_fc_onFolderUp then
+        fc.onFolderUp = fm_self._titlebar_orig_fc_onFolderUp
+    end
+    fm_self._titlebar_orig_fc_onFolderUp = nil
     if fc and fm_self._titlebar_orig_fc_onGotoPage then
         fc.onGotoPage = fm_self._titlebar_orig_fc_onGotoPage
     end
