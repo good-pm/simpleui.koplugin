@@ -218,20 +218,66 @@ function M.patchFileManagerClass(plugin)
             FileManager._simpleui_reinit_patched = true
             local orig_reinit = FileManager.reinit
             FileManager.reinit = function(fm_self, path, focused_file)
-                local HS      = liveHS()
-                local hs_inst = HS and HS._instance
-                if not hs_inst then
+                -- Rotation calls reinit with path=nil; pass those through
+                -- unconditionally — they must go through orig_reinit so that
+                -- setupLayout rebuilds the FM at the new screen dimensions.
+                if not path then
                     return orig_reinit(fm_self, path, focused_file)
                 end
+
+                local HS      = liveHS()
+                local hs_inst = HS and HS._instance
 
                 -- Resolve the target path the same way reinit would.
                 local ffiUtil = require("ffi/util")
                 local resolved = ffiUtil.realpath(path) or path
 
-                -- 1. Close the homescreen intentionally.
-                hs_inst._navbar_closing_intentionally = true
-                pcall(function() UIManager:close(hs_inst) end)
-                hs_inst._navbar_closing_intentionally = nil
+                -- Detect whether a foreign fullscreen widget (History,
+                -- Collections, etc.) is on top of the FM. These widgets sit
+                -- above the FM in the UIManager stack and cover it entirely;
+                -- orig_reinit would call setupLayout and rebuild the FM
+                -- underneath them, producing a visible glitch. Instead we
+                -- close every such widget first, then navigate manually.
+                --
+                -- Strategy: collect every widget above the FM that is neither
+                -- the FM itself nor the SimpleUI homescreen (already handled
+                -- via hs_inst), then close them all before proceeding.
+                local overlays = {}
+                if not hs_inst then
+                    local stack = UI.getWindowStack()
+                    -- Stack is bottom-to-top; find the FM position first.
+                    local fm_pos = 0
+                    for i, entry in ipairs(stack) do
+                        if entry.widget == fm_self then fm_pos = i; break end
+                    end
+                    -- Everything above the FM that is not the HS is an overlay.
+                    for i = fm_pos + 1, #stack do
+                        local w = stack[i].widget
+                        if w then overlays[#overlays + 1] = w end
+                    end
+                end
+
+                -- Pass-through when nothing special is on top: orig_reinit is
+                -- correct and complete for the plain FM case.
+                if not hs_inst and #overlays == 0 then
+                    return orig_reinit(fm_self, path, focused_file)
+                end
+
+                -- From here: either the HS is open, or foreign widgets sit
+                -- above the FM. Close them all before navigating.
+
+                -- 1a. Close the homescreen intentionally (only when open).
+                if hs_inst then
+                    hs_inst._navbar_closing_intentionally = true
+                    pcall(function() UIManager:close(hs_inst) end)
+                    hs_inst._navbar_closing_intentionally = nil
+                end
+
+                -- 1b. Close any overlay widgets (History, Collections, …)
+                --     top-to-bottom so each close is clean.
+                for i = #overlays, 1, -1 do
+                    pcall(function() UIManager:close(overlays[i]) end)
+                end
 
                 -- 2. Navigate the FM to the requested path.
                 --    Suppress onPathChanged — we rebuild the bar explicitly below.
@@ -256,7 +302,8 @@ function M.patchFileManagerClass(plugin)
                 end
 
                 -- 5. Suppress _doShowHS for the TouchMenu that closes after
-                --    the calling menu callback returns.
+                --    the calling menu callback returns (relevant for hs_inst
+                --    case; harmless when only an overlay is present).
                 fm_self._sui_show_folder_pending = true
             end
         end
@@ -1324,6 +1371,32 @@ function M.patchUIManagerShow(plugin)
         else
             orig_show(um_self, widget)
         end
+
+        -- Clear the subtitle on the injected widget's own title_bar.
+        -- Menu:init calls updatePageInfo before UIManager.show, so
+        -- _setPageSubtitle may have already written the stale FM path
+        -- (_fm_path_base) into the widget's subtitle_widget. Wipe it
+        -- here, after orig_show, and also reset the shared upvalue so
+        -- future updatePageInfo calls on this widget stay clean.
+        do
+            local inj_tb = widget.title_bar
+            if inj_tb and inj_tb.subtitle_widget then
+                local pg     = widget.page     or 0
+                local pg_num = widget.page_num or 0
+                -- Rebuild subtitle without path: page indicator only (or empty).
+                local page_text = ""
+                if M._subtitleEnabled and M._subtitleEnabled()
+                        and pg_num and pg_num > 1 then
+                    local ffiUtil2 = require("ffi/util")
+                    page_text = ffiUtil2.template(_("Page %1 of %2"), pg, pg_num)
+                end
+                inj_tb:setSubTitle(page_text, true)
+            end
+            -- Also reset the shared upvalue so subsequent updatePageInfo
+            -- calls on this widget do not re-inject the FM path.
+            M.setFMPathBase("", plugin.ui)
+        end
+
         UIManager:setDirty(widget[1], "ui")
 
         -- Schedule a navpager arrow update for the next event-loop tick.
@@ -1474,6 +1547,16 @@ function M.patchUIManagerClose(plugin)
                 end
             else
                 plugin:_restoreTabInFM(nil, widget._navbar_prev_action)
+            end
+
+            -- Restore _fm_path_base from the FM's current folder so the
+            -- breadcrumb reappears in the subtitle after the overlay closes.
+            local fm_r = liveFM()
+            if fm_r then
+                local fc_r = fm_r.file_chooser
+                if fc_r and fc_r.path then
+                    pcall(function() fm_r:updateTitleBarPath(fc_r.path, false) end)
+                end
             end
         end
 
