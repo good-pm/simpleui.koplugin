@@ -2168,6 +2168,9 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 end,
             },
             -- -----------------------------------------------------------------
+            -- Developer submenu
+            -- To re-enable: change _SHOW_DEVELOPER_MENU to true (line below).
+            -- -----------------------------------------------------------------
             -- About submenu
             -- -----------------------------------------------------------------
             {

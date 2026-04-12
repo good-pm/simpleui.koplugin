@@ -77,13 +77,11 @@ function SimpleUIPlugin:init()
 
         Config.applyFirstRunDefaults()
         Config.migrateOldCustomSlots()
-        -- Only sanitize QA slots when custom QAs actually exist.
-        -- getCustomQAList() is a single settings read; skipping the full
-        -- sanitize pass on every boot saves several settings reads + writes
-        -- for the common case where no custom QAs have been defined.
-        if next(Config.getCustomQAList()) then
-            Config.sanitizeQASlots()
-        end
+        -- Always run sanitizeQASlots: it cleans both custom QA slot references
+        -- and any stale built-in IDs from navbar_tabs.  The function is cheap —
+        -- it reads a handful of settings and only writes back when it finds
+        -- something invalid, so the common no-op case costs only a few reads.
+        Config.sanitizeQASlots()
         self.ui.menu:registerToMainMenu(self)
         if G_reader_settings:nilOrTrue("simpleui_enabled") then
             Patches.installAll(self)

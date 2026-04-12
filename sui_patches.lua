@@ -271,13 +271,22 @@ function M.patchFileManagerClass(plugin)
         -- title_bar because apply() overwrites all geometry afterwards anyway.
         Titlebar.reapply(fm_self)
 
-        -- orig_setupLayout always sets fm_self[1] to a freshly built fm_ui
-        -- (new FileChooser with correct dimensions). Always use that fresh widget
-        -- as the inner content — caching _navbar_inner across reinit() calls
-        -- would wrap the stale previous fm_ui, which has the old screen dimensions,
-        -- causing the library to render incorrectly after a rotation.
-        local inner_widget = fm_self[1]
-        fm_self._navbar_inner = inner_widget
+        -- Use _navbar_inner to prevent wrapping the wrapper on repeated
+        -- setupLayout calls (e.g. after closing a book). Exception: when the
+        -- screen dimensions change (rotation), drop the cached widget so the
+        -- fresh FileChooser built by orig_setupLayout with the new dimensions
+        -- is used instead.
+        local cur_w = Screen:getWidth()
+        local cur_h = Screen:getHeight()
+        if fm_self._navbar_inner
+                and (fm_self._navbar_layout_w ~= cur_w
+                     or fm_self._navbar_layout_h ~= cur_h) then
+            fm_self._navbar_inner = nil
+        end
+        local inner_widget = fm_self._navbar_inner or fm_self[1]
+        fm_self._navbar_inner    = inner_widget
+        fm_self._navbar_layout_w = cur_w
+        fm_self._navbar_layout_h = cur_h
 
         local tabs = Config.loadTabConfig()
         local navbar_container, wrapped, bar, topbar, bar_idx, topbar_on2, topbar_idx =
@@ -1927,6 +1936,64 @@ end
 -- installAll / teardownAll
 -- ---------------------------------------------------------------------------
 
+-- ---------------------------------------------------------------------------
+-- Debug: button bounds overlay
+-- When "simpleui_debug_button_bounds" is enabled, wraps Button:paintTo so
+-- every button draws a 2px border over itself, making it easy to verify
+-- the actual tap target real estate on device.
+-- ---------------------------------------------------------------------------
+
+function M.installButtonBoundsDebug(plugin)
+    local Button = package.loaded["ui/widget/button"]
+    if not Button then
+        -- Button not loaded yet; defer until first use via a lazy wrapper on
+        -- the Button module loader — we hook require instead.
+        local orig_require = _G.require
+        plugin._orig_require_for_bounds = orig_require
+        _G.require = function(modname, ...)
+            local result = orig_require(modname, ...)
+            if modname == "ui/widget/button" and not result._simpleui_bounds_patched then
+                M._wrapButtonPaintTo(plugin, result)
+            end
+            return result
+        end
+        return
+    end
+    if not Button._simpleui_bounds_patched then
+        M._wrapButtonPaintTo(plugin, Button)
+    end
+end
+
+function M._wrapButtonPaintTo(plugin, Button)
+    local Blitbuffer = require("ffi/blitbuffer")
+    local orig_paintTo = Button.paintTo
+    plugin._orig_button_paintTo = orig_paintTo
+    Button._simpleui_bounds_patched = true
+
+    Button.paintTo = function(btn_self, bb, x, y)
+        orig_paintTo(btn_self, bb, x, y)
+        if not G_reader_settings:isTrue("simpleui_debug_button_bounds") then return end
+        local dimen = btn_self:getSize()
+        if not dimen then return end
+        bb:paintBorder(x, y, dimen.w, dimen.h, 2, Blitbuffer.COLOR_RED)
+    end
+end
+
+function M.uninstallButtonBoundsDebug(plugin)
+    -- Restore the require hook if we set one.
+    if plugin._orig_require_for_bounds then
+        _G.require = plugin._orig_require_for_bounds
+        plugin._orig_require_for_bounds = nil
+    end
+    -- Restore Button:paintTo if Button was already loaded when we patched it.
+    local Button = package.loaded["ui/widget/button"]
+    if Button and plugin._orig_button_paintTo then
+        Button.paintTo = plugin._orig_button_paintTo
+        plugin._orig_button_paintTo     = nil
+        Button._simpleui_bounds_patched = nil
+    end
+end
+
 function M.installAll(plugin)
     M.patchFileManagerClass(plugin)
     M.patchStartWithMenu()
@@ -1938,6 +2005,10 @@ function M.installAll(plugin)
     M.patchMenuInitForPagination(plugin)
     M.patchMenuForNavpager(plugin)
     M.patchBookInfoNavigation(plugin)
+    -- Install button-bounds overlay when the debug setting is on at startup.
+    if G_reader_settings:isTrue("simpleui_debug_button_bounds") then
+        M.installButtonBoundsDebug(plugin)
+    end
     -- Folder covers are installed only when the feature is enabled to avoid
     -- wrapping MosaicMenuItem.update unconditionally, which would hide the
     -- BookInfoManager upvalue from third-party user-patches.
@@ -2088,6 +2159,8 @@ function M.teardownAll(plugin)
         Dispatcher._simpleui_execute_orig    = nil
         Dispatcher._simpleui_execute_patched = nil
     end
+
+    M.uninstallButtonBoundsDebug(plugin)
 
     -- Reset module-level state so a re-enable cycle starts clean.
     _hs_boot_done             = false
