@@ -1442,7 +1442,10 @@ function M.patchUIManagerShow(plugin)
         end
 
         -- Close the homescreen when a different fullscreen widget appears on top.
+        -- Exclude widgets that claim covers_fullscreen but have no title_bar
+        -- (e.g. VocabBuilder's MenuDialog, which is a popup, not a real fullscreen widget).
         if _show_depth == 0 and widget and widget.covers_fullscreen
+                and widget.title_bar
                 and widget.name ~= "homescreen"
                 and widget ~= plugin.ui
                 and not widget._sui_keep_homescreen then
@@ -1587,8 +1590,11 @@ function M.patchUIManagerClose(plugin)
         local result = orig_close(um_self, widget, ...)
 
         -- Re-open the homescreen after a fullscreen widget closes, subject to guards.
+        -- Exclude widgets that claim covers_fullscreen but have no title_bar
+        -- (e.g. VocabBuilder's MenuDialog, which is a popup, not a real fullscreen widget).
         if isStartWithHS()
                 and widget.covers_fullscreen
+                and widget.title_bar
                 and widget.name ~= "homescreen"
                 and not widget_is_fm
                 and not widget._navbar_closing_intentionally
