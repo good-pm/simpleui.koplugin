@@ -1443,6 +1443,7 @@ function M.install()
         end
     end
 
+    if not MosaicMenuItem.rounded_folder_covers then
     function MosaicMenuItem:_setFolderCover(img)
         -- Mark as processed here — only reached when a cover is actually available.
         -- This lets updateItems retry (after async BookInfoManager fetch) without
@@ -1504,6 +1505,7 @@ function M.install()
         end
         self._underline_container[1] = widget
     end
+    end -- rounded_folder_covers guard
 
     -- ---------------------------------------------------------------------------
     -- Builds and displays a placeholder cover for bookless folders (no direct
