@@ -11,6 +11,7 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local InputContainer  = require("ui/widget/container/inputcontainer")
 local LineWidget      = require("ui/widget/linewidget")
+local Widget          = require("ui/widget/widget")
 local OverlapGroup    = require("ui/widget/overlapgroup")
 local TextWidget      = require("ui/widget/textwidget")
 local UIManager       = require("ui/uimanager")
@@ -145,16 +146,26 @@ local function _compactRowsHeight(n)
     return n * _COMPACT_ROW_H + (n == 2 and _COMPACT_ROW_GAP or 0)
 end
 
+local RoundedBar = Widget:extend{}
+function RoundedBar:getSize() return Geom:new{ w = self.width, h = self.height } end
+function RoundedBar:paintTo(bb, x, y)
+    local r = math.min(self.radius, math.floor(self.height / 2))
+    bb:paintRoundedRect(x, y, self.width, self.height, self.bg_color, r)
+    local fw = math.max(0, math.floor(self.width * math.min(self.pct, 1.0)))
+    if fw > 0 then
+        bb:paintRoundedRect(x, y, fw, self.height, self.fill_color, r)
+    end
+end
+
 -- Renders a filled/empty progress bar of the given width and percentage
 local function buildProgressBar(w, pct, bar_h)
-    local fw = math.max(0, math.floor(w * math.min(pct, 1.0)))
-    if fw <= 0 then
-        return LineWidget:new{ dimen = Geom:new{ w = w, h = bar_h }, background = _CLR_BAR_BG }
-    end
-    return OverlapGroup:new{
-        dimen = Geom:new{ w = w, h = bar_h },
-        LineWidget:new{ dimen = Geom:new{ w = w,  h = bar_h }, background = _CLR_BAR_BG },
-        LineWidget:new{ dimen = Geom:new{ w = fw, h = bar_h }, background = _CLR_BAR_FG },
+    return RoundedBar:new{
+        width      = w,
+        height     = bar_h,
+        pct        = pct,
+        radius     = Screen:scaleBySize(3),
+        bg_color   = _CLR_BAR_BG,
+        fill_color = _CLR_BAR_FG,
     }
 end
 

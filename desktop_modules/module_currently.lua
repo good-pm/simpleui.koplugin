@@ -18,6 +18,7 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local InputContainer  = require("ui/widget/container/inputcontainer")
 local LineWidget      = require("ui/widget/linewidget")
+local Widget          = require("ui/widget/widget")
 local OverlapGroup    = require("ui/widget/overlapgroup")
 local TextWidget      = require("ui/widget/textwidget")
 local TextBoxWidget   = require("ui/widget/textboxwidget")
@@ -102,6 +103,17 @@ local _MAX_SEC = 120
 local _bstats_cache = {}
 
 
+local RoundedBar = Widget:extend{}
+function RoundedBar:getSize() return Geom:new{ w = self.width, h = self.height } end
+function RoundedBar:paintTo(bb, x, y)
+    local r = math.min(self.radius, math.floor(self.height / 2))
+    bb:paintRoundedRect(x, y, self.width, self.height, self.bg_color, r)
+    local fw = math.max(0, math.floor(self.width * math.min(self.pct, 1.0)))
+    if fw > 0 then
+        bb:paintRoundedRect(x, y, fw, self.height, self.fill_color, r)
+    end
+end
+
 -- Builds a progress bar with an inline percentage label: [▓▓▓░░░░] XX%
 -- Spacing below the bar is handled by gap_before() on the next element,
 -- consistent with how every other element in the layout works.
@@ -114,16 +126,14 @@ local function buildProgressBarWithPct(w, pct, bar_h, scale, lbl_scale, face_inl
     -- face_inline is pre-resolved by build(); fallback for direct calls.
     local _face   = face_inline or Font:getFace("smallinfofont", math.max(7, math.floor(_BASE_INLINEPCT_FS * scale * lbl_scale)))
 
-    local bar
-    if fw <= 0 then
-        bar = LineWidget:new{ dimen = Geom:new{ w = bar_w, h = bar_h }, background = _CLR_BAR_BG }
-    else
-        bar = OverlapGroup:new{
-            dimen = Geom:new{ w = bar_w, h = bar_h },
-            LineWidget:new{ dimen = Geom:new{ w = bar_w, h = bar_h }, background = _CLR_BAR_BG },
-            LineWidget:new{ dimen = Geom:new{ w = fw,    h = bar_h }, background = _CLR_BAR_FG },
-        }
-    end
+    local bar = RoundedBar:new{
+        width      = bar_w,
+        height     = bar_h,
+        pct        = pct,
+        radius     = Screen:scaleBySize(3),
+        bg_color   = _CLR_BAR_BG,
+        fill_color = _CLR_BAR_FG,
+    }
 
     return HorizontalGroup:new{
         align = "center",

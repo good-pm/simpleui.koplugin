@@ -14,6 +14,7 @@ local LineWidget      = require("ui/widget/linewidget")
 local OverlapGroup    = require("ui/widget/overlapgroup")
 local TextWidget      = require("ui/widget/textwidget")
 local VerticalSpan    = require("ui/widget/verticalspan")
+local Widget          = require("ui/widget/widget")
 local Screen          = Device.screen
 local lfs             = require("libs/libkoreader-lfs")
 local Config          = require("sui_config")
@@ -134,18 +135,31 @@ function SH.vspan(px, pool)
 end
 
 -- ---------------------------------------------------------------------------
+-- RoundedBar widget — draws a rounded track + fill via paintRoundedRect
+-- ---------------------------------------------------------------------------
+local RoundedBar = Widget:extend{}
+function RoundedBar:getSize() return Geom:new{ w = self.width, h = self.height } end
+function RoundedBar:paintTo(bb, x, y)
+    local r = math.min(self.radius, math.floor(self.height / 2))
+    bb:paintRoundedRect(x, y, self.width, self.height, self.bg_color, r)
+    local fw = math.max(0, math.floor(self.width * math.min(self.pct, 1.0)))
+    if fw > 0 then
+        bb:paintRoundedRect(x, y, fw, self.height, self.fill_color, r)
+    end
+end
+
+-- ---------------------------------------------------------------------------
 -- progressBar
 -- ---------------------------------------------------------------------------
 function SH.progressBar(w, pct, bh)
     bh = bh or Screen:scaleBySize(4)
-    local fw = math.max(0, math.floor(w * math.min(pct or 0, 1.0)))
-    if fw <= 0 then
-        return LineWidget:new{ dimen = Geom:new{ w = w, h = bh }, background = _CLR_BAR_BG }
-    end
-    return OverlapGroup:new{
-        dimen = Geom:new{ w = w, h = bh },
-        LineWidget:new{ dimen = Geom:new{ w = w,  h = bh }, background = _CLR_BAR_BG },
-        LineWidget:new{ dimen = Geom:new{ w = fw, h = bh }, background = _CLR_BAR_FG },
+    return RoundedBar:new{
+        width      = w,
+        height     = bh,
+        pct        = pct or 0,
+        radius     = Screen:scaleBySize(3),
+        bg_color   = _CLR_BAR_BG,
+        fill_color = _CLR_BAR_FG,
     }
 end
 
