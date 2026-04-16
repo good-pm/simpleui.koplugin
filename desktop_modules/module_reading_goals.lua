@@ -19,6 +19,7 @@ local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
 local _               = require("gettext")
+local N_              = _.ngettext
 local logger          = require("logger")
 local Config          = require("sui_config")
 
@@ -423,8 +424,8 @@ local function _annualData(books_read)
         "books_read=", books_read, "physical=", getAnnualPhysical(),
         "read=", read, "pct=", pct, "pct_str=", pct_str)
     local detail = (goal > 0)
-        and string.format(_("%d/%d books"), read, goal)
-        or  string.format(_("%d books"), read)
+        and string.format(N_("%d/%d book", "%d/%d books", goal), read, goal)
+        or  string.format(N_("%d book", "%d books", read), read)
     return pct, pct_str, detail
 end
 
@@ -587,6 +588,7 @@ end
 function M.getMenuItems(ctx_menu)
     local refresh = ctx_menu.refresh
     local _lc     = ctx_menu._
+    local N_lc    = _lc.ngettext
     local scale_item = _makeScaleItem(ctx_menu)
     scale_item.separator = true
     return {
@@ -623,7 +625,7 @@ function M.getMenuItems(ctx_menu)
         { text_func = function()
               local g = getAnnualGoal()
               return g > 0
-                  and string.format(_lc("  Set Goal  (%d books in %s)"), g, _getYearStr())
+                  and string.format(N_lc("  Set Goal  (%d book in %s)", "  Set Goal  (%d books in %s)", g), g, _getYearStr())
                   or  string.format(_lc("  Set Goal  (%s)"), _getYearStr())
           end,
           keep_menu_open = true,
