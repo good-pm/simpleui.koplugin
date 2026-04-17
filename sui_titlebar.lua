@@ -54,6 +54,7 @@ M.ITEMS = {
     { id = "menu_button",   label = function() return _("Menu")   end, ctx = "fm"  },
     { id = "up_button",     label = function() return _("Back")   end, ctx = "fm"  },
     { id = "search_button", label = function() return _("Search") end, ctx = "fm"  },
+    { id = "browse_button", label = function() return _("Browse") end, ctx = "fm"  },
     { id = "title",         label = function() return _("Title")  end, ctx = "fm",  no_side = true },
     { id = "inj_back",      label = function() return _("Menu")   end, ctx = "inj" },
     { id = "inj_right",     label = function() return _("Close")  end, ctx = "inj" },
@@ -75,6 +76,7 @@ local _VIS_DEFAULTS = {
     up_button     = true,
     title         = true,
     search_button = true,
+    browse_button = false,
     inj_back      = true,
     inj_right     = false,
 }
@@ -103,9 +105,9 @@ function M.getSizeScale() return _SIZE_SCALE[M.getSizeKey()] or 1.0 end
 -- ---------------------------------------------------------------------------
 
 local _FM_DEFAULTS = {
-    side        = { menu_button = "right", up_button = "left", search_button = "left" },
+    side        = { menu_button = "right", up_button = "left", search_button = "left", browse_button = "right" },
     order_left  = { "up_button", "search_button" },
-    order_right = { "menu_button" },
+    order_right = { "browse_button", "menu_button" },
 }
 local _INJ_DEFAULTS = {
     side        = { inj_back = "left", inj_right = "right" },
@@ -312,6 +314,10 @@ function M.apply(fm_self)
     local show_menu   = M.isItemVisible("menu_button")
     local show_up     = M.isItemVisible("up_button")
     local show_search = M.isItemVisible("search_button")
+    local show_browse = M.isItemVisible("browse_button") and (function()
+        local ok_bm, BM = pcall(require, "sui_browsemeta")
+        return ok_bm and BM and BM.isEnabled()
+    end)()
     local show_title  = M.isItemVisible("title")
 
     local cfg     = M.getFMConfig()
@@ -319,6 +325,7 @@ function M.apply(fm_self)
     if show_menu   then visible["menu_button"]   = true end
     if show_up     then visible["up_button"]     = true end
     if show_search then visible["search_button"] = true end
+    if show_browse then visible["browse_button"] = true end
     local slot_map = _buildSlotMap(cfg.order_left, cfg.order_right, visible)
 
     local function placeBtn(id, btn)
@@ -422,14 +429,17 @@ function M.apply(fm_self)
                 -- Build a list of all injected left-side buttons (excluding up_button
                 -- itself) keyed by their configured slot, so we can shift them when
                 -- the back button disappears.  Each entry: { btn, configured_slot }.
-                -- Currently the only injected left-side button is search_button, but
-                -- the logic is generic: any future left button will benefit too.
                 local function _leftSideBtns()
                     local list = {}
                     for _, id in ipairs(cfg.order_left) do
                         if id ~= "up_button" and slot_map[id] and slot_map[id].side == "left" then
                             -- Find the widget for this id.
-                            local widget = (id == "search_button") and fm_self._titlebar_search_btn or nil
+                            local widget
+                            if id == "search_button" then
+                                widget = fm_self._titlebar_search_btn
+                            elseif id == "browse_button" then
+                                widget = fm_self._titlebar_browse_btn
+                            end
                             if widget then
                                 list[#list + 1] = { btn = widget, slot = slot_map[id].slot }
                             end
@@ -543,6 +553,40 @@ function M.apply(fm_self)
                 local FileChooser_cls = require("ui/widget/filechooser")
                 fm_self._titlebar_orig_fc_onFolderUp = true  -- sentinel: wrapper is active
                 fc.onFolderUp = function(fc_self, ...)
+                    -- If the back button is pressed at the dim_list level
+                    -- (the root of the virtual author/series tree), exit to
+                    -- normal FS mode.  In sub-folders (file_list) the back
+                    -- button climbs to dim_list as usual.
+                    do
+                        local ok_bm, BM = pcall(require, "sui_browsemeta")
+                        if ok_bm and BM and BM.exitToNormal then
+                            local path = fc_self.path or ""
+                            if path:find("/", 1, true) then
+                                -- Only intercept at the dim_list level.
+                                local ok_pl, level = pcall(BM.getPathLevel, path)
+                                if ok_pl and level == "dim_list" then
+                                    BM.exitToNormal(fc_self, fm_self)
+                                    -- Re-evaluate the real folder state instead of
+                                    -- assuming root. genItemTable may have already set
+                                    -- _simpleui_has_go_up correctly after changeToPath;
+                                    -- if not, compute it from the item_table.
+                                    local is_sub_after = fc_self._simpleui_has_go_up
+                                    if is_sub_after == nil then
+                                        is_sub_after = false
+                                        for _, item in ipairs(fc_self.item_table or {}) do
+                                            if item.is_go_up or (item.text and item.text:find("\u{2B06}")) then
+                                                is_sub_after = true; break
+                                            end
+                                        end
+                                    end
+                                    if _isLockedAtHome(fc_self.path) then is_sub_after = false end
+                                    if (fc_self.path or "") == "/" then is_sub_after = false end
+                                    _applyBackButtonState(fc_self, is_sub_after, 1)
+                                    return true
+                                end
+                            end
+                        end
+                    end
                     local current = FileChooser_cls.onFolderUp
                     local ok, result = pcall(current, fc_self, ...)
                     -- Re-evaluate after the navigation completes.
@@ -714,6 +758,209 @@ function M.apply(fm_self)
         end
     end
 
+    -- Browse button ----------------------------------------------------------
+    -- Injected exactly like search_button.  Calls sui_browsemeta.navigateTo()
+    -- via a ButtonDialogTitle with three options: Normal / By Author / By Series.
+    -- The icon reflects the current browse mode and is updated every time
+    -- genItemTable fires (i.e. on every folder navigation).
+    if show_browse then
+        local ok_ib, IconButton = pcall(require, "ui/widget/iconbutton")
+        if ok_ib and IconButton then
+            local s = slot_map["browse_button"]
+            if s then
+                local btn_padding = tb.button_padding or require("device").screen:scaleBySize(11)
+
+                -- Full icon paths required for direct ImageWidget.file assignment.
+                -- Use plugin-relative paths (same pattern as sui_foldercovers, sui_config)
+                -- for cross-platform compatibility including Android.
+                local _ico_plugin_dir = debug.getinfo(1, "S").source:match("^@(.+/)[^/]+$") or "./"
+                local _BROWSE_ICONS = {
+                    normal = _ico_plugin_dir .. "icons/default.svg",
+                    author = _ico_plugin_dir .. "icons/author.svg",
+                    series = _ico_plugin_dir .. "icons/series.svg",
+                }
+
+
+                -- Determine the initial icon from the current fc path.
+                local _initial_icon = _BROWSE_ICONS.normal
+                do
+                    local ok_bm, BM = pcall(require, "sui_browsemeta")
+                    if ok_bm and BM then
+                        local fc0 = fm_self.file_chooser
+                        local mode = fc0 and BM.getCurrentMode(fc0) or "normal"
+                        _initial_icon = _BROWSE_ICONS[mode] or _BROWSE_ICONS.normal
+                    end
+                end
+
+                local browse_btn
+                browse_btn = IconButton:new{
+                    icon        = _initial_icon,
+                    width       = iw,
+                    height      = iw,
+                    padding     = btn_padding,
+                    show_parent = tb.show_parent or fm_self,
+                    callback = function()
+                        local ok_bm, BM = pcall(require, "sui_browsemeta")
+                        if not ok_bm or not BM then return end
+
+                        local UIManager2    = require("ui/uimanager")
+                        local ButtonDialog  = require("ui/widget/buttondialog")
+                        local fc_ref        = fm_self.file_chooser
+                        local cur_mode      = fc_ref and BM.getCurrentMode(fc_ref) or "normal"
+
+                        local function _check(mode)
+                            return cur_mode == mode and "\u{2713} " or "  "
+                        end
+
+                        local dlg
+                        dlg = ButtonDialog:new{
+                            title       = _("Browse library"),
+                            title_align = "center",
+                            buttons = {
+                                {{
+                                    text     = _check("normal") .. _("Default"),
+                                    callback = function()
+                                        UIManager2:close(dlg)
+                                        BM.navigateTo(fm_self, "normal")
+                                        -- Update icon immediately.
+                                        if browse_btn.image then
+                                            browse_btn.image.file = _BROWSE_ICONS.normal
+                                            pcall(browse_btn.image.free, browse_btn.image)
+                                            pcall(browse_btn.image.init, browse_btn.image)
+                                            UIManager2:setDirty(tb.show_parent or fm_self, "ui", tb.dimen)
+                                        end
+                                    end,
+                                }},
+                                {{
+                                    text     = _check("author") .. _("By author"),
+                                    callback = function()
+                                        UIManager2:close(dlg)
+                                        BM.navigateTo(fm_self, "author")
+                                        if browse_btn.image then
+                                            browse_btn.image.file = _BROWSE_ICONS.author
+                                            pcall(browse_btn.image.free, browse_btn.image)
+                                            pcall(browse_btn.image.init, browse_btn.image)
+                                            UIManager2:setDirty(tb.show_parent or fm_self, "ui", tb.dimen)
+                                        end
+                                    end,
+                                }},
+                                {{
+                                    text     = _check("series") .. _("By series"),
+                                    callback = function()
+                                        UIManager2:close(dlg)
+                                        BM.navigateTo(fm_self, "series")
+                                        if browse_btn.image then
+                                            browse_btn.image.file = _BROWSE_ICONS.series
+                                            pcall(browse_btn.image.free, browse_btn.image)
+                                            pcall(browse_btn.image.init, browse_btn.image)
+                                            UIManager2:setDirty(tb.show_parent or fm_self, "ui", tb.dimen)
+                                        end
+                                    end,
+                                }},
+                                {{
+                                    text     = _("Cancel"),
+                                    callback = function() UIManager2:close(dlg) end,
+                                }},
+                            },
+                        }
+                        UIManager:show(dlg)
+                    end,
+                }
+
+                -- Strip paddings — same pattern as search_button.
+                browse_btn.width         = iw
+                browse_btn.height        = iw
+                if browse_btn.image then
+                    browse_btn.image.width  = iw
+                    browse_btn.image.height = iw
+                    pcall(browse_btn.image.free, browse_btn.image)
+                    pcall(browse_btn.image.init, browse_btn.image)
+                end
+                browse_btn.padding_left   = 0
+                browse_btn.padding_right  = 0
+                browse_btn.padding_bottom = 0
+                browse_btn:update()
+                -- Explicitly set the icon file after update() so the correct
+                -- mode icon is shown immediately when the titlebar is rebuilt
+                -- (e.g. after toggling Browse by Author/Series in the menu and
+                -- returning to the Library).  Without this, IconButton:new{}
+                -- may render a stale or fallback icon during :init(), and the
+                -- update() call above does not re-apply _initial_icon.
+                if browse_btn.image then
+                    browse_btn.image.file = _initial_icon
+                    pcall(browse_btn.image.free, browse_btn.image)
+                    pcall(browse_btn.image.init, browse_btn.image)
+                end
+                browse_btn.overlap_align  = nil
+                browse_btn.overlap_offset = { _buttonX(s.side, s.slot, iw, pad, gap, sw), 0 }
+
+                table.insert(tb, browse_btn)
+                fm_self._titlebar_browse_btn = browse_btn
+
+                -- Compact position for when the back button is hidden.
+                if s.side == "left" then
+                    local up_slot_b = slot_map["up_button"] and slot_map["up_button"].slot or 0
+                    local display_slot_b = s.slot > up_slot_b and s.slot - 1 or s.slot
+                    fm_self._simpleui_browse_x_compact = _buttonX("left", display_slot_b, iw, pad, gap, sw)
+                end
+
+                -- Initial compact check (mirrors search_button logic).
+                if show_up and fm_self.file_chooser then
+                    local fc3   = fm_self.file_chooser
+                    local cur3  = fc3.item_table or {}
+                    local at_root3 = (fc3.path or "") == "/"
+                    if #cur3 > 0 then
+                        local has_up = false
+                        for _, item in ipairs(cur3) do
+                            if item.is_go_up or (item.text and item.text:find("\u{2B06}")) then
+                                has_up = true; break
+                            end
+                        end
+                        if not has_up then at_root3 = true end
+                    end
+                    if _isLockedAtHome(fc3.path) then at_root3 = true end
+                    if at_root3 and s.side == "left" then
+                        local up_slot_b2 = slot_map["up_button"] and slot_map["up_button"].slot or 0
+                        local disp = s.slot > up_slot_b2 and s.slot - 1 or s.slot
+                        browse_btn.overlap_offset = { _buttonX("left", disp, iw, pad, gap, sw), 0 }
+                    end
+                end
+
+                -- Update icon on folder navigation so it always reflects the
+                -- current browse mode.  Hook into the existing genItemTable
+                -- wrapper that _applyBackButtonState already installed on fc.
+                -- We append a thin wrapper that runs after the back-button logic.
+                local fc_b = fm_self.file_chooser
+                if fc_b then
+                    local prev_gen = fc_b.genItemTable
+                    if prev_gen then
+                        local _btn_ref  = browse_btn
+                        local _fm_ref   = fm_self
+                        local _tb_ref   = tb
+                        local _icons    = _BROWSE_ICONS
+                        fc_b.genItemTable = function(fc_self, ...)
+                            local result = prev_gen(fc_self, ...)
+                            -- Refresh icon for current mode.
+                            local ok_bm2, BM2 = pcall(require, "sui_browsemeta")
+                            if ok_bm2 and BM2 and _btn_ref.image then
+                                local mode2 = BM2.getCurrentMode(fc_self)
+                                local icon2 = _icons[mode2] or _icons.normal
+                                if _btn_ref.image.file ~= icon2 then
+                                    _btn_ref.image.file = icon2
+                                    pcall(_btn_ref.image.free, _btn_ref.image)
+                                    pcall(_btn_ref.image.init, _btn_ref.image)
+                                    UIManager:setDirty(_tb_ref.show_parent or _fm_ref, "ui", _tb_ref.dimen)
+                                end
+                            end
+                            return result
+                        end
+                        fm_self._titlebar_browse_gen_hooked = true
+                    end
+                end
+            end
+        end
+    end
+
     -- Title -----------------------------------------------------------------
     if tb.setTitle then
         fm_self._titlebar_orig_title_set = true
@@ -745,6 +992,17 @@ function M.restore(fm_self)
         end
         fm_self._titlebar_search_btn = nil
     end
+
+    -- Remove the injected browse button.
+    if fm_self._titlebar_browse_btn then
+        local btn = fm_self._titlebar_browse_btn
+        for i = #tb, 1, -1 do
+            if tb[i] == btn then table.remove(tb, i); break end
+        end
+        fm_self._titlebar_browse_btn = nil
+    end
+    fm_self._simpleui_browse_x_compact = nil
+    fm_self._titlebar_browse_gen_hooked = nil
 
     local fc = fm_self.file_chooser
     if fc and fm_self._titlebar_orig_fc_genItemTable then

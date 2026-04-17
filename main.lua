@@ -77,13 +77,11 @@ function SimpleUIPlugin:init()
 
         Config.applyFirstRunDefaults()
         Config.migrateOldCustomSlots()
-        -- Only sanitize QA slots when custom QAs actually exist.
-        -- getCustomQAList() is a single settings read; skipping the full
-        -- sanitize pass on every boot saves several settings reads + writes
-        -- for the common case where no custom QAs have been defined.
-        if next(Config.getCustomQAList()) then
-            Config.sanitizeQASlots()
-        end
+        -- Always run sanitizeQASlots: it cleans both custom QA slot references
+        -- and any stale built-in IDs from navbar_tabs.  The function is cheap —
+        -- it reads a handful of settings and only writes back when it finds
+        -- something invalid, so the common no-op case costs only a few reads.
+        Config.sanitizeQASlots()
         self.ui.menu:registerToMainMenu(self)
         if G_reader_settings:nilOrTrue("simpleui_enabled") then
             Patches.installAll(self)
@@ -216,7 +214,7 @@ end
 local _PLUGIN_MODULES = {
     "sui_i18n", "sui_config", "sui_core", "sui_bottombar", "sui_topbar",
     "sui_patches", "sui_menu", "sui_titlebar", "sui_quickactions",
-    "sui_homescreen", "sui_foldercovers", "sui_updater",
+    "sui_homescreen", "sui_foldercovers", "sui_browsemeta", "sui_updater",
     "desktop_modules/moduleregistry",
     "desktop_modules/module_books_shared",
     "desktop_modules/module_clock",
@@ -291,6 +289,10 @@ function SimpleUIPlugin:onTeardown()
     if mod_rg and type(mod_rg.reset) == "function" then
         pcall(mod_rg.reset)
     end
+    local mod_bm = package.loaded["sui_browsemeta"]
+    if mod_bm and type(mod_bm.reset) == "function" then
+        pcall(mod_bm.reset)
+    end
     -- Evict all plugin modules from the Lua module cache so that a hot update
     -- (files replaced on disk without restarting KOReader) picks up new code
     -- on the next plugin load, instead of reusing the old in-memory versions.
@@ -309,11 +311,34 @@ function SimpleUIPlugin:onScreenResize()
     UI.invalidateDimCache()
     UIManager:scheduleIn(0.2, function()
         if self._simpleui_suspended then return end
+        local RUI = package.loaded["apps/reader/readerui"]
+        if RUI and RUI.instance then return end
+
+        -- If the homescreen is open, close and reopen it so HomescreenWidget:new
+        -- runs with the new screen dimensions. rewrapAllWidgets cannot resize it
+        -- correctly because its layout is built entirely in init(), not via
+        -- wrapWithNavbar — the same reason FM uses reinit() (= rotate()) instead
+        -- of a simple rewrap.
+        local HS = package.loaded["sui_homescreen"]
+        if HS and HS._instance then
+            local hs_inst = HS._instance
+            hs_inst._navbar_closing_intentionally = true
+            pcall(function() UIManager:close(hs_inst) end)
+            hs_inst._navbar_closing_intentionally = nil
+            if not self._goalTapCallback then self:addToMainMenu({}) end
+            local tabs = Config.loadTabConfig()
+            Bottombar.setActiveAndRefreshFM(self, "homescreen", tabs)
+            HS.show(
+                function(aid) self:_navigate(aid, self.ui, Config.loadTabConfig(), false) end,
+                self._goalTapCallback
+            )
+            return
+        end
+
         self:_rewrapAllWidgets()
         self:_refreshCurrentView()
     end)
 end
-
 function SimpleUIPlugin:onNetworkConnected()
     if self._simpleui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
@@ -382,6 +407,17 @@ function SimpleUIPlugin:onResume()
     if not reader_active then
         local HS = package.loaded["sui_homescreen"]
         if HS and HS._instance then
+            -- Refresh the QA tap callback on the live homescreen instance.
+            -- If the device suspended while the homescreen (or the touch menu
+            -- floating on top of it) was open, HS._instance survives but its
+            -- _on_qa_tap closure may reference a stale FileManager object.
+            -- Reassigning it here ensures QA buttons work on the very first
+            -- tap after wakeup, without requiring the user to navigate away
+            -- and reopen the homescreen.
+            local plugin_ref = self
+            HS._instance._on_qa_tap = function(aid)
+                plugin_ref:_navigate(aid, plugin_ref.ui, Config.loadTabConfig(), false)
+            end
             HS.refresh(true)
         end
         -- Re-open the Homescreen on wakeup when \"Start with Homescreen\" is set.

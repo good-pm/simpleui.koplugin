@@ -83,9 +83,10 @@ local function buildQAWidget(w, action_ids, show_labels, on_tap_fn, d, flat)
     for _, aid in ipairs(action_ids) do
         if aid:match("^custom_qa_%d+$") then
             if cqa_valid[aid] then valid_ids[#valid_ids + 1] = aid end
-        else
+        elseif Config.ACTION_BY_ID[aid] then
             valid_ids[#valid_ids + 1] = aid
         end
+        -- unknown IDs (neither a live custom QA nor a known built-in) are silently dropped
     end
     if #valid_ids == 0 then return nil end
 
@@ -217,6 +218,10 @@ local function makeSlot(slot)
                 _has_fl = ok and v == true
             end
             return _has_fl
+        end
+        if id == "browse_authors" or id == "browse_series" then
+            local ok_bm, BM = pcall(require, "sui_browsemeta")
+            return ok_bm and BM and BM.isEnabled()
         end
         return true
     end

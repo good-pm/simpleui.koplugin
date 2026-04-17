@@ -49,9 +49,12 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local ImageWidget     = require("ui/widget/imagewidget")
 local LineWidget      = require("ui/widget/linewidget")
+local LeftContainer   = require("ui/widget/container/leftcontainer")
 local OverlapGroup    = require("ui/widget/overlapgroup")
 local RightContainer  = require("ui/widget/container/rightcontainer")
 local Screen          = require("device").screen
+local VerticalGroup   = require("ui/widget/verticalgroup")
+local VerticalSpan    = require("ui/widget/verticalspan")
 local Size            = require("ui/size")
 local TextBoxWidget   = require("ui/widget/textboxwidget")
 local TextWidget      = require("ui/widget/textwidget")
@@ -256,6 +259,18 @@ local function _getMosaicMenuItemAndPatch()
     local ok_up, userpatch = pcall(require, "userpatch")
     if not ok_up or not userpatch then return nil, nil end
     return userpatch.getUpValue(MosaicMenu._updateItemsBuildUI, "MosaicMenuItem"), userpatch
+end
+
+-- Returns ListMenuItem (the upvalue inside listmenu's _updateItemsBuildUI),
+-- or nil on failure.  ListMenuItem is a module-level local in listmenu.lua,
+-- so it is a closure upvalue of ListMenu._updateItemsBuildUI — same pattern
+-- as MosaicMenuItem.
+local function _getListMenuItem()
+    local ok_lm, ListMenu = pcall(require, "listmenu")
+    if not ok_lm or not ListMenu then return nil end
+    local ok_up, userpatch = pcall(require, "userpatch")
+    if not ok_up or not userpatch then return nil end
+    return userpatch.getUpValue(ListMenu._updateItemsBuildUI, "ListMenuItem")
 end
 
 -- ---------------------------------------------------------------------------
@@ -660,17 +675,40 @@ local function _installFileDialogButton(BookInfoManager)
             -- Virtual paths are not on disk, so we use the cached series_items
             -- instead of scanning the directory.
             local is_virtual_series = _sg_items_cache[file] ~= nil
+            -- Check if this is a browsemeta virtual leaf (author/series dim_list).
+            local fc = FileManager.instance and FileManager.instance.file_chooser
+            local item_entry = nil
+            if fc and fc.item_table then
+                for _, it in ipairs(fc.item_table) do
+                    if it.path == file then item_entry = it; break end
+                end
+            end
+            local is_virtual_meta = item_entry and item_entry.is_virtual_meta_leaf
+            local label
+            if is_virtual_series then
+                label = _("Set series cover…")
+            elseif is_virtual_meta then
+                label = _("Set virtual folder cover…")
+            else
+                label = _("Set folder cover…")
+            end
             return {{
-                text = is_virtual_series and _("Set series cover…") or _("Set folder cover…"),
+                text = label,
                 callback = function()
                     local UIManager = require("ui/uimanager")
-                    local fc = FileManager.instance and FileManager.instance.file_chooser
                     if fc and fc.file_dialog then
                         UIManager:close(fc.file_dialog)
                     end
                     if fc then
                         if is_virtual_series then
                             _openSeriesGroupCoverPicker(file, fc, BookInfoManager)
+                        elseif is_virtual_meta then
+                            -- Delegate to browsemeta's own picker which knows
+                            -- about the virtual path structure and overrides.
+                            local ok_bm, BM = pcall(require, "sui_browsemeta")
+                            if ok_bm and BM and BM.openVirtualCoverPicker then
+                                BM.openVirtualCoverPicker(file, fc)
+                            end
                         else
                             _openFolderCoverPicker(file, fc, BookInfoManager)
                         end
@@ -958,9 +996,13 @@ local function _sgOpenGroup(file_chooser, group_item)
     local items       = group_item.series_items
 
     -- Persist state so refreshPath / updateItems can restore the view.
+    -- Save the parent page so we can return to it when the user presses back,
+    -- even after re-entering the series view via refreshPath (e.g. after closing a book).
+    local parent_page = file_chooser.page or 1
     _sg_current = {
         series_name    = group_item.text,
         parent_path    = parent_path,
+        parent_page    = parent_page,
         should_restore = false,
     }
 
@@ -1059,9 +1101,9 @@ local function _installSeriesGrouping()
             if _sg_current then
                 _sg_current.should_restore = true
             end
-            -- Reset the flag before changeToPath so the changeToPath hook
-            -- knows we are leaving a virtual folder intentionally.
-            fc.item_table._sg_is_series_view = false
+            -- NOTE: do NOT clear _sg_is_series_view here. The changeToPath hook
+            -- reads it to distinguish a series-exit from normal navigation.
+            -- changeToPath will clear it after preserving _sg_current.
             if parent then
                 fc:changeToPath(parent)
             end
@@ -1085,6 +1127,18 @@ local function _installSeriesGrouping()
                 -- keep _sg_current so updateItems can restore focus on the group.
                 if _sg_current then
                     _sg_current.should_restore = true
+                    -- Pre-seed path_items with the item index matching the series group,
+                    -- so KOReader's native changeToPath opens the right page directly.
+                    local saved_page = _sg_current.parent_page
+                    if saved_page and saved_page > 1 and fc.path_items and fc.perpage then
+                        -- Find the series item index to pass to KOReader as itemnumber.
+                        -- We do this after _sgProcessItemTable has already run so the
+                        -- grouped item_table is available via the switchItemTable hook.
+                        -- Instead, just seek via _sg_orig_changeToPath and let updateItems
+                        -- restore the focus; but ensure fc.page is pre-set so the render
+                        -- lands on the right page even if updateItems is called with 1.
+                        fc.page = saved_page
+                    end
                 end
             else
                 -- Navigating somewhere else entirely (Library tab → home, goHome,
@@ -1112,10 +1166,15 @@ local function _installSeriesGrouping()
         if not M.getSeriesGrouping() then return end
         if not _sg_current then return end
         -- The item_table was rebuilt by refreshPath; find the matching group.
-        local sname = _sg_current.series_name
+        local sname       = _sg_current.series_name
+        local saved_page  = _sg_current.parent_page  -- preserve across _sgOpenGroup
         for _, item in ipairs(fc.item_table or {}) do
             if item.is_series_group and item.text == sname then
                 _sgOpenGroup(fc, item)
+                -- Restore parent_page so back-button can return to the right page.
+                if _sg_current then
+                    _sg_current.parent_page = saved_page
+                end
                 return
             end
         end
@@ -1762,7 +1821,7 @@ function M.install()
         end
 
         -- ── Series index badge (top-left, same style as pages badge) ──
-        if M.getOverlaySeries() and self.status ~= "complete" then
+        if M.getOverlaySeries() then
             local series_index = self._fc_series_index
             if not series_index and self.filepath then
                 local bi = BookInfoManager:getBookInfo(self.filepath, false)
@@ -1827,6 +1886,194 @@ function M.install()
     _installSeriesGrouping()
 
     _installFileDialogButton(BookInfoManager)
+
+    -- -----------------------------------------------------------------------
+    -- ListMenuItem patch — cover images for virtual folders in list_image_meta
+    -- -----------------------------------------------------------------------
+    -- KOReader's ListMenuItem:update() treats any entry without is_file/file
+    -- as a plain directory (text + count only, no image).  Virtual folders
+    -- from the metabrowser (is_virtual_meta_leaf) and series-group folders
+    -- (is_series_group) carry a representative_filepath that we can use to
+    -- fetch a cover from BookInfoManager and render it exactly like a regular
+    -- file cover, but positioned as a squared thumbnail on the left.
+    local ListMenuItem = _getListMenuItem()
+    if ListMenuItem and not ListMenuItem._simpleui_lm_patched then
+        ListMenuItem._simpleui_lm_patched     = true
+        ListMenuItem._simpleui_lm_orig_update = ListMenuItem.update
+
+        local orig_lm_update = ListMenuItem.update
+        function ListMenuItem:update(...)
+            orig_lm_update(self, ...)
+
+            -- Only act in cover-image mode, on virtual folder entries,
+            -- and only when the feature is enabled.
+            if not self.do_cover_image                      then return end
+            if not M.isEnabled()                            then return end
+            if self.menu and self.menu.no_refresh_covers    then return end
+            if self._foldercover_processed                  then return end
+
+            local entry = self.entry
+            if not entry then return end
+            -- Must be a virtual-folder entry (directory, not a real file).
+            if entry.is_file or entry.file then return end
+            if not (entry.is_virtual_meta_leaf or entry.is_series_group) then return end
+
+            local cover_specs = self.menu and self.menu.cover_specs
+
+            -- Resolve the representative filepath.
+            -- is_virtual_meta_leaf: already stored on the entry by browsemeta.
+            -- is_series_group:      no representative_filepath — iterate series_items
+            --                       exactly as MosaicMenuItem does.
+            local repr_fp = entry.representative_filepath
+
+            if not repr_fp and entry.is_series_group then
+                -- Check for a user override first.
+                local sg_overrides = _getCoverOverrides()
+                local sg_override  = sg_overrides[entry.path]
+                if sg_override then
+                    repr_fp = sg_override
+                else
+                    -- Walk series_items (or the _sg_items_cache) to find the
+                    -- first book that already has a cached cover.
+                    local items = entry.series_items or _sg_items_cache[entry.path]
+                    if items then
+                        for _, book_entry in ipairs(items) do
+                            if book_entry.path then
+                                local bi = BookInfoManager:getBookInfo(book_entry.path, true)
+                                if bi and bi.has_cover and bi.cover_fetched
+                                        and not bi.ignore_cover and bi.cover_bb
+                                        and (not cover_specs
+                                             or not BookInfoManager.isCachedCoverInvalid(bi, cover_specs))
+                                then
+                                    repr_fp = book_entry.path
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            if not repr_fp then return end  -- nothing cached yet; updateItems will retry
+
+            -- Check for a user-chosen override for virtual-meta leaves.
+            if entry.is_virtual_meta_leaf then
+                local overrides   = _getCoverOverrides()
+                local override_fp = overrides[entry.path]
+                if override_fp then repr_fp = override_fp end
+            end
+
+            -- Fetch the cover blitbuffer.
+            local bookinfo = BookInfoManager:getBookInfo(repr_fp, true)
+            if not bookinfo then return end
+            if not (bookinfo.has_cover and bookinfo.cover_fetched
+                    and not bookinfo.ignore_cover and bookinfo.cover_bb) then
+                return
+            end
+            if cover_specs and BookInfoManager.isCachedCoverInvalid(bookinfo, cover_specs) then
+                return
+            end
+
+            self:_setListFolderCover(bookinfo)
+        end
+
+        -- Renders a cover thumbnail on the left, folder name + count on the right.
+        -- Mirrors the layout that ListMenuItem uses for known files with covers,
+        -- but substitutes the file metadata widgets with the directory text/count.
+        function ListMenuItem:_setListFolderCover(bookinfo)
+            self._foldercover_processed = true
+
+            local underline_h = self.underline_h or 1
+            local dimen = Geom:new{
+                w = self.width,
+                h = self.height - 2 * underline_h,
+            }
+
+            local border_size = Size.border.thin
+            local img_size    = dimen.h  -- square thumbnail = item height
+            local max_img_w   = img_size - 2 * border_size
+            local max_img_h   = max_img_w
+
+            -- Scale the blitbuffer to fit the square thumbnail area.
+            local _, _, scale_factor = BookInfoManager.getCachedCoverSize(
+                bookinfo.cover_w, bookinfo.cover_h, max_img_w, max_img_h)
+            local wimage = ImageWidget:new{
+                image        = bookinfo.cover_bb,
+                scale_factor = scale_factor,
+            }
+            wimage:_render()
+            local image_size = wimage:getSize()
+
+            local wleft = CenterContainer:new{
+                dimen = Geom:new{ w = img_size, h = dimen.h },
+                FrameContainer:new{
+                    width     = image_size.w + 2 * border_size,
+                    height    = image_size.h + 2 * border_size,
+                    margin    = 0,
+                    padding   = 0,
+                    bordersize = border_size,
+                    wimage,
+                },
+            }
+
+            -- Right side: folder name (bold) + item count.
+            -- Use the menu's own font_size so the virtual-folder title renders
+            -- at the same size as normal directory names in the same list view.
+            -- The previous hardcoded formula produced ~24px which was visibly
+            -- larger than the standard directory font (~20px).
+            local pad       = Screen:scaleBySize(10)
+            local main_w    = dimen.w - img_size - pad * 2
+            local font_size = (self.menu and self.menu.font_size) or 20
+            local info_size = math.max(10, font_size - 4)
+
+            local wname = TextBoxWidget:new{
+                text                         = BD.directory(self.text),
+                face                         = Font:getFace("cfont", font_size),
+                width                        = main_w,
+                alignment                    = "left",
+                bold                         = true,
+                height                       = dimen.h,
+                height_adjust                = true,
+                height_overflow_show_ellipsis = true,
+            }
+            local wcount = TextWidget:new{
+                text = self.mandatory or "",
+                face = Font:getFace("infont", info_size),
+            }
+
+            local wmain = LeftContainer:new{
+                dimen = Geom:new{ w = main_w, h = dimen.h },
+                VerticalGroup:new{
+                    wname,
+                    VerticalSpan:new{ width = Screen:scaleBySize(2) },
+                    wcount,
+                },
+            }
+
+            local widget = OverlapGroup:new{
+                dimen = dimen:copy(),
+                -- Cover thumbnail flush-left
+                wleft,
+                -- Name + count, padded from the thumbnail
+                LeftContainer:new{
+                    dimen = dimen:copy(),
+                    HorizontalGroup:new{
+                        HorizontalSpan:new{ width = img_size + pad },
+                        wmain,
+                    },
+                },
+            }
+
+            -- Replace the underline-container contents.
+            if self._underline_container[1] then
+                self._underline_container[1]:free()
+            end
+            self._underline_container[1] = VerticalGroup:new{
+                VerticalSpan:new{ width = underline_h },
+                widget,
+            }
+        end
+    end
 end
 
 function M.uninstall()
@@ -1866,6 +2113,17 @@ function M.uninstall()
     _uninstallItemCache()
     _uninstallSeriesGrouping()
     _uninstallFileDialogButton()
+
+    -- Uninstall ListMenuItem patch.
+    local ListMenuItem = _getListMenuItem()
+    if ListMenuItem and ListMenuItem._simpleui_lm_patched then
+        if ListMenuItem._simpleui_lm_orig_update then
+            ListMenuItem.update = ListMenuItem._simpleui_lm_orig_update
+            ListMenuItem._simpleui_lm_orig_update = nil
+        end
+        ListMenuItem._setListFolderCover    = nil
+        ListMenuItem._simpleui_lm_patched   = nil
+    end
 end
 
 return M
